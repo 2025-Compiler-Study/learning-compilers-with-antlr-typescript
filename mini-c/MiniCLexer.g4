@@ -1,21 +1,22 @@
 lexer grammar MiniCLexer;
 
 // Keywords
-// Data Types
+// Type Specifier
 INT : 'int';
 VOID : 'void';
-CHAR : 'char';
+
+// Type Qualifiers
+CONST : 'const';
 
 // Control Flow
 IF : 'if';
 ELSE : 'else';
 WHILE : 'while';
-FOR : 'for';
 RETURN : 'return';
 
-// Loop Control
-BREAK : 'break';
-CONTINUE : 'continue';
+// Built-in Functions
+READ : 'read';
+WRITE : 'write';
 
 // Operators
 PLUS : '+';
@@ -32,6 +33,11 @@ GE : '>='; // Greater Than or Equal To
 AND : '&&';
 OR : '||';
 NOT : '!';
+PLUS_ASSIGN : '+=';
+MINUS_ASSIGN : '-=';
+MUL_ASSIGN : '*=';
+DIV_ASSIGN : '/=';
+MOD_ASSIGN : '%=';
 ASSIGN : '=';
 INC : '++';
 DEC : '--';
@@ -47,12 +53,17 @@ SEMI : ';';
 COMMA : ',';
 
 fragment DIGIT : [0-9];
+fragment HEX_DIGIT : [0-9a-fA-F];
+fragment OCT_DIGIT : [0-7];
 fragment LETTER : [a-zA-Z_];
 
 // Literals
-INTEGER : DIGIT+ ;
-CHAR_LITERAL : '\'' ( ~['\\] | '\\' . ) '\'';
-STRING_LITERAL : '"' ( ~["\\] | '\\' . )* '"' ;
+INTEGER
+    : '0' [xX] HEX_DIGIT+    // 16진수: 0xFF, 0x1A
+    | '0' OCT_DIGIT+         // 8진수: 0755
+    | [1-9] DIGIT*           // 10진수: 123, 5
+    | '0'
+    ;
 
 // Identifier
 IDENTIFIER : ('_' | LETTER) ('_' | LETTER | DIGIT)* ;
@@ -63,3 +74,4 @@ BLOCK_COMMENT : '/*' .*? '*/' -> skip ;
 
 // Whitespace
 WS : [ \t\r\n]+ -> skip ;
+
