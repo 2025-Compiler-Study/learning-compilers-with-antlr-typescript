@@ -1,1 +1,4 @@
 node_modules
+
+# ANTLR generated files
+**/.antlr/
