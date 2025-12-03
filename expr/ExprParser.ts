@@ -2,7 +2,7 @@
 import * as antlr from "antlr4ng";
 import { Token } from "antlr4ng";
 
-import { ExprListener } from "./ExprListener.js";
+import { ExprListener } from "./ExprListener";
 // for running tests with parameters, TODO: discuss strategy for typed parameters in CI
 // eslint-disable-next-line no-unused-vars
 type int = number;

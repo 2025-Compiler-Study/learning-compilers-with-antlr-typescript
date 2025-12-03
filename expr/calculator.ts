@@ -1,6 +1,6 @@
 import { CharStream, CommonTokenStream } from "antlr4ng";
-import { ExprLexer } from "./ExprLexer.js";
-import { ExprParser, ExprContext } from "./ExprParser.js";
+import { ExprLexer } from "./ExprLexer";
+import { ExprParser, ExprContext } from "./ExprParser";
 
 // 수식을 재귀적으로 계산하는 함수
 function evaluateExpr(ctx: ExprContext): number {

@@ -1,6 +1,6 @@
 import { CharStream, CommonTokenStream } from "antlr4ng";
-import { ExprLexer } from "./ExprLexer.js";
-import { ExprParser } from "./ExprParser.js";
+import { ExprLexer } from "./ExprLexer";
+import { ExprParser } from "./ExprParser";
 
 // 수식 문자열을 파싱하는 함수
 function parseExpression(input: string) {

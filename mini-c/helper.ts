@@ -1,6 +1,6 @@
 import { CharStream, CommonTokenStream, Token, ATNSimulator, Recognizer, RecognitionException } from "antlr4ng";
 import type { ANTLRErrorListener } from "antlr4ng";
-import { MiniCLexer } from "./MiniCLexer.js";
+import { MiniCLexer } from "./MiniCLexer";
 
 // 커스텀 에러 리스너: 에러 메시지를 수집
 class LexerErrorListener implements ANTLRErrorListener {

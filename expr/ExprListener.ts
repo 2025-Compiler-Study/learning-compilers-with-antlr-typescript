@@ -2,8 +2,8 @@
 import type { ErrorNode, ParseTreeListener, ParserRuleContext, TerminalNode } from "antlr4ng";
 
 
-import { ProgContext } from "./ExprParser.js";
-import { ExprContext } from "./ExprParser.js";
+import { ProgContext } from "./ExprParser";
+import { ExprContext } from "./ExprParser";
 
 
 /**

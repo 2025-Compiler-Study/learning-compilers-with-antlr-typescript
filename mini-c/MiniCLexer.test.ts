@@ -6,7 +6,7 @@ import {
   tokenizeWithErrors,
   tokenizeStrict,
   getTokenNamesStrict,
-} from "./helper.js";
+} from "./helper";
 
 describe("MiniCLexer - Longest Matching 원칙", () => {
   it("연산자 longest matching: =와 ==, +와 ++ 및 +=를 구분", () => {
