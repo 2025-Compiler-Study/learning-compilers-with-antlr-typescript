@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "tsx",
     "antlr": "antlr-ng -Dlanguage=TypeScript",
+    "antlr:v": "antlr-ng --generate-visitor -Dlanguage=TypeScript",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:run": "vitest run"
