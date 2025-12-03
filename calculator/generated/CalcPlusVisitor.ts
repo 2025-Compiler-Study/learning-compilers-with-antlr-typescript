@@ -2,11 +2,11 @@
 import { AbstractParseTreeVisitor } from "antlr4ng";
 
 
-import { Calc0Context } from "./CalcPlusParser.js";
-import { IntContext } from "./CalcPlusParser.js";
-import { ParensContext } from "./CalcPlusParser.js";
-import { MulDivContext } from "./CalcPlusParser.js";
-import { AddSubContext } from "./CalcPlusParser.js";
+import { Calc0Context } from "./CalcPlusParser";
+import { IntContext } from "./CalcPlusParser";
+import { ParensContext } from "./CalcPlusParser";
+import { MulDivContext } from "./CalcPlusParser";
+import { AddSubContext } from "./CalcPlusParser";
 
 
 /**
