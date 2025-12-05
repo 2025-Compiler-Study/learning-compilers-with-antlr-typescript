@@ -3,6 +3,8 @@ import { CalcPlusLexer } from "../generated/CalcPlusLexer";
 import { Calc0Context, CalcPlusParser } from "../generated/CalcPlusParser";
 import { CalculatorL } from "./calc0_l";
 import { CalculatorV } from "./calc0_v";
+import { PostFixListener } from "./postfix_l";
+import { PostFixVisitor } from "./postfix_v";
 
 export const createParserTree = (input: string): Calc0Context => {
   const charStream = CharStream.fromString(input);
@@ -26,4 +28,19 @@ export const calculateWithVisitor = (input: string): number | null => {
   const tree = createParserTree(input);
 
   return calculator.visit(tree);
+};
+
+export const convertToPostFixWithListener = (input: string): string => {
+  const converter = new PostFixListener();
+  const tree = createParserTree(input);
+  ParseTreeWalker.DEFAULT.walk(converter, tree);
+
+  return converter.getPostFix();
+};
+
+export const convertToPostFixWithVisitor = (input: string): string => {
+  const converter = new PostFixVisitor();
+  const tree = createParserTree(input);
+
+  return converter.getPostFix(tree.expr());
 };
