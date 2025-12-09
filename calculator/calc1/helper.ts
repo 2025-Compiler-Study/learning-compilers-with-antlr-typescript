@@ -1,0 +1,23 @@
+import { CharStream, CommonTokenStream, ParseTreeWalker } from "antlr4ng";
+import { CalcPlusLexer } from "../generated/CalcPlusLexer";
+import { Calc1Context, CalcPlusParser } from "../generated/CalcPlusParser";
+import { Calc1Visitor } from "./calc1_v";
+import { Calc1Listener } from "./calc1_l";
+
+export const createParserTree = (input: string): Calc1Context => {
+  const charStream = CharStream.fromString(input);
+  const lexer = new CalcPlusLexer(charStream);
+  const tokenStream = new CommonTokenStream(lexer);
+  const parser = new CalcPlusParser(tokenStream);
+
+  return parser.calc1();
+};
+
+export const calculateWithVisitor = (input: string): Map<string, number> => {
+  const calculator = new Calc1Visitor();
+  const tree = createParserTree(input);
+
+  calculator.visit(tree);
+
+  return calculator.getVariables();
+};
