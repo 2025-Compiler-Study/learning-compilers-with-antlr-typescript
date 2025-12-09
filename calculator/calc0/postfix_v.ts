@@ -43,11 +43,12 @@ export class PostFixVisitor extends CalcPlusVisitor<string> {
       throw new Error("오른쪽 피연산자 평가 결과가 null입니다");
     }
 
-    if (!ctx._op) {
+    const opNode = ctx.getChild(1);
+    if (!opNode) {
       throw new Error("연산자를 찾을 수 없습니다");
     }
+    const op = opNode.getText();
 
-    const op = ctx._op.text;
     return `${left} ${right} ${op}`;
   };
 
@@ -72,11 +73,11 @@ export class PostFixVisitor extends CalcPlusVisitor<string> {
       throw new Error("오른쪽 피연산자 평가 결과가 null입니다");
     }
 
-    if (!ctx._op) {
+    const opNode = ctx.getChild(1);
+    if (!opNode) {
       throw new Error("연산자를 찾을 수 없습니다");
     }
-
-    const op = ctx._op.text;
+    const op = opNode.getText();
 
     return `${left} ${right} ${op}`;
   };

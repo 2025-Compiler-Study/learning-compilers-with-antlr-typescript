@@ -12,7 +12,12 @@ export class CalculatorL extends CalcPlusListener {
   exitMulDiv = (ctx: MulDivContext): void => {
     const right = this.stack.pop()!;
     const left = this.stack.pop()!;
-    const op = ctx._op!.text!;
+
+    const opNode = ctx.getChild(1);
+    if (!opNode) {
+      throw new Error("연산자를 찾을 수 없습니다");
+    }
+    const op = opNode.getText();
 
     const result = op === "*" ? left * right : Math.floor(left / right);
     this.stack.push(result);
@@ -21,7 +26,12 @@ export class CalculatorL extends CalcPlusListener {
   exitAddSub = (ctx: AddSubContext): void => {
     const right = this.stack.pop()!;
     const left = this.stack.pop()!;
-    const op = ctx._op!.text!;
+
+    const opNode = ctx.getChild(1);
+    if (!opNode) {
+      throw new Error("연산자를 찾을 수 없습니다");
+    }
+    const op = opNode.getText();
 
     const result = op === "+" ? left + right : left - right;
     this.stack.push(result);

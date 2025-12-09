@@ -10,12 +10,20 @@ export class PostFixListener extends CalcPlusListener {
   };
 
   exitMulDiv = (ctx: MulDivContext): void => {
-    const op = ctx._op!.text!;
+    const opNode = ctx.getChild(1);
+    if (!opNode) {
+      throw new Error("연산자를 찾을 수 없습니다");
+    }
+    const op = opNode.getText();
     this.postfixOutput.push(op);
   };
 
   exitAddSub = (ctx: AddSubContext): void => {
-    const op = ctx._op!.text!;
+    const opNode = ctx.getChild(1);
+    if (!opNode) {
+      throw new Error("연산자를 찾을 수 없습니다");
+    }
+    const op = opNode.getText();
     this.postfixOutput.push(op);
   };
 
