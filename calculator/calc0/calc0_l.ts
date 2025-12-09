@@ -2,7 +2,7 @@ import { IntContext, MulDivContext, AddSubContext } from "../generated/CalcPlusP
 import { CalcPlusListener } from "../generated/CalcPlusListener";
 
 export class CalculatorL extends CalcPlusListener {
-  private stack: number[] = [];
+  protected stack: number[] = [];
 
   exitInt = (ctx: IntContext): void => {
     const value = parseInt(ctx.INT()!.getText());
