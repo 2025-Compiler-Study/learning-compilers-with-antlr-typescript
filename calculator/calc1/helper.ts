@@ -21,3 +21,12 @@ export const calculateWithVisitor = (input: string): Map<string, number> => {
 
   return calculator.getVariables();
 };
+
+export const calculateWithListener = (input: string): Map<string, number> => {
+  const calculator = new Calc1Listener();
+  const tree = createParserTree(input);
+
+  ParseTreeWalker.DEFAULT.walk(calculator, tree);
+
+  return calculator.getVariables();
+};
