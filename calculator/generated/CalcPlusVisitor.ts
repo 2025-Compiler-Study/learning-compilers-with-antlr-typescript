@@ -2,11 +2,14 @@
 import { AbstractParseTreeVisitor } from "antlr4ng";
 
 
-import { Calc0Context } from "./CalcPlusParser";
-import { IntContext } from "./CalcPlusParser";
-import { ParensContext } from "./CalcPlusParser";
-import { MulDivContext } from "./CalcPlusParser";
-import { AddSubContext } from "./CalcPlusParser";
+import { Calc0Context } from "./CalcPlusParser.js";
+import { IntContext } from "./CalcPlusParser.js";
+import { VarContext } from "./CalcPlusParser.js";
+import { ParensContext } from "./CalcPlusParser.js";
+import { MulDivContext } from "./CalcPlusParser.js";
+import { AddSubContext } from "./CalcPlusParser.js";
+import { Calc1Context } from "./CalcPlusParser.js";
+import { ExprAssignContext } from "./CalcPlusParser.js";
 
 
 /**
@@ -31,6 +34,13 @@ export class CalcPlusVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      */
     visitInt?: (ctx: IntContext) => Result;
     /**
+     * Visit a parse tree produced by the `Var`
+     * labeled alternative in `CalcPlusParser.expr`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitVar?: (ctx: VarContext) => Result;
+    /**
      * Visit a parse tree produced by the `Parens`
      * labeled alternative in `CalcPlusParser.expr`.
      * @param ctx the parse tree
@@ -51,5 +61,18 @@ export class CalcPlusVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitAddSub?: (ctx: AddSubContext) => Result;
+    /**
+     * Visit a parse tree produced by `CalcPlusParser.calc1`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitCalc1?: (ctx: Calc1Context) => Result;
+    /**
+     * Visit a parse tree produced by the `ExprAssign`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitExprAssign?: (ctx: ExprAssignContext) => Result;
 }
 
