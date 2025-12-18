@@ -5,6 +5,7 @@ import { CalculatorL } from "./calc0_l";
 import { CalculatorV } from "./calc0_v";
 import { PostFixListener } from "./postfix_l";
 import { PostFixVisitor } from "./postfix_v";
+import { PreFixListener } from "./prefix_l";
 
 export const createParserTree = (input: string): Calc0Context => {
   const charStream = CharStream.fromString(input);
@@ -43,4 +44,12 @@ export const convertToPostFixWithVisitor = (input: string): string => {
   const tree = createParserTree(input);
 
   return converter.getPostFix(tree.expr());
+};
+
+export const convertToPreFixWithListener = (input: string): string => {
+  const converter = new PreFixListener();
+  const tree = createParserTree(input);
+  ParseTreeWalker.DEFAULT.walk(converter, tree);
+
+  return converter.getPreFix();
 };
