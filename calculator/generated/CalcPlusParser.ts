@@ -380,9 +380,10 @@ export class CalcPlusParser extends antlr.Parser {
             this.state = 67;
             this.expr(0);
             this.state = 68;
+            localContext._cmpOp = this.tokenStream.LT(1);
             _la = this.tokenStream.LA(1);
             if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 129024) !== 0))) {
-            this.errorHandler.recoverInline(this);
+                localContext._cmpOp = this.errorHandler.recoverInline(this);
             }
             else {
                 this.errorHandler.reportMatch(this);
@@ -856,6 +857,7 @@ export class Calc2Context extends antlr.ParserRuleContext {
 
 
 export class CondContext extends antlr.ParserRuleContext {
+    public _cmpOp?: Token | null;
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
