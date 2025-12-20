@@ -1,7 +1,7 @@
 import { IntContext, MulDivContext, AddSubContext, ParensContext, Calc0Context } from "../generated/CalcPlusParser";
 import { CalcPlusVisitor } from "../generated/CalcPlusVisitor";
 
-export class CalculatorV extends CalcPlusVisitor<number> {
+export class CalculatorV extends CalcPlusVisitor<any> {
   visitCalc0 = (ctx: Calc0Context): number => {
     const result = this.visit(ctx.expr());
 
