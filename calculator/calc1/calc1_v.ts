@@ -2,7 +2,7 @@ import { CalculatorV } from "../calc0/calc0_v";
 import { Calc1Context, ExprAssignContext, VarContext } from "../generated/CalcPlusParser";
 
 export class Calc1Visitor extends CalculatorV {
-  private memory: Map<string, number> = new Map();
+  protected memory: Map<string, number> = new Map();
 
   visitCalc1 = (ctx: Calc1Context): number => {
     const stmts = ctx.stmt();
