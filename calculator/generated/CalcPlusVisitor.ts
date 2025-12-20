@@ -10,6 +10,10 @@ import { MulDivContext } from "./CalcPlusParser.js";
 import { AddSubContext } from "./CalcPlusParser.js";
 import { Calc1Context } from "./CalcPlusParser.js";
 import { ExprAssignContext } from "./CalcPlusParser.js";
+import { IfElseContext } from "./CalcPlusParser.js";
+import { Calc2Context } from "./CalcPlusParser.js";
+import { CondContext } from "./CalcPlusParser.js";
+import { BlockContext } from "./CalcPlusParser.js";
 
 
 /**
@@ -74,5 +78,30 @@ export class CalcPlusVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitExprAssign?: (ctx: ExprAssignContext) => Result;
+    /**
+     * Visit a parse tree produced by the `IfElse`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitIfElse?: (ctx: IfElseContext) => Result;
+    /**
+     * Visit a parse tree produced by `CalcPlusParser.calc2`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitCalc2?: (ctx: Calc2Context) => Result;
+    /**
+     * Visit a parse tree produced by `CalcPlusParser.cond`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitCond?: (ctx: CondContext) => Result;
+    /**
+     * Visit a parse tree produced by `CalcPlusParser.block`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitBlock?: (ctx: BlockContext) => Result;
 }
 

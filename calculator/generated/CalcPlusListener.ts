@@ -10,6 +10,10 @@ import { MulDivContext } from "./CalcPlusParser.js";
 import { AddSubContext } from "./CalcPlusParser.js";
 import { Calc1Context } from "./CalcPlusParser.js";
 import { ExprAssignContext } from "./CalcPlusParser.js";
+import { IfElseContext } from "./CalcPlusParser.js";
+import { Calc2Context } from "./CalcPlusParser.js";
+import { CondContext } from "./CalcPlusParser.js";
+import { BlockContext } from "./CalcPlusParser.js";
 
 
 /**
@@ -109,6 +113,48 @@ export class CalcPlusListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitExprAssign?: (ctx: ExprAssignContext) => void;
+    /**
+     * Enter a parse tree produced by the `IfElse`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    enterIfElse?: (ctx: IfElseContext) => void;
+    /**
+     * Exit a parse tree produced by the `IfElse`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    exitIfElse?: (ctx: IfElseContext) => void;
+    /**
+     * Enter a parse tree produced by `CalcPlusParser.calc2`.
+     * @param ctx the parse tree
+     */
+    enterCalc2?: (ctx: Calc2Context) => void;
+    /**
+     * Exit a parse tree produced by `CalcPlusParser.calc2`.
+     * @param ctx the parse tree
+     */
+    exitCalc2?: (ctx: Calc2Context) => void;
+    /**
+     * Enter a parse tree produced by `CalcPlusParser.cond`.
+     * @param ctx the parse tree
+     */
+    enterCond?: (ctx: CondContext) => void;
+    /**
+     * Exit a parse tree produced by `CalcPlusParser.cond`.
+     * @param ctx the parse tree
+     */
+    exitCond?: (ctx: CondContext) => void;
+    /**
+     * Enter a parse tree produced by `CalcPlusParser.block`.
+     * @param ctx the parse tree
+     */
+    enterBlock?: (ctx: BlockContext) => void;
+    /**
+     * Exit a parse tree produced by `CalcPlusParser.block`.
+     * @param ctx the parse tree
+     */
+    exitBlock?: (ctx: BlockContext) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}
