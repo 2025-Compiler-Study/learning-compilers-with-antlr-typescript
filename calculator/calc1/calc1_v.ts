@@ -4,14 +4,12 @@ import { Calc1Context, ExprAssignContext, VarContext } from "../generated/CalcPl
 export class Calc1Visitor extends CalculatorV {
   protected memory: Map<string, number> = new Map();
 
-  visitCalc1 = (ctx: Calc1Context): number => {
+  visitCalc1 = (ctx: Calc1Context): void => {
     const stmts = ctx.stmt();
 
     for (const stmt of stmts) {
       this.visit(stmt);
     }
-
-    return 0;
   };
 
   visitExprAssign = (ctx: ExprAssignContext): number => {
