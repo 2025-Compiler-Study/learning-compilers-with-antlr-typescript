@@ -30,26 +30,28 @@ export class Calc3Visitor extends Calc2Visitor {
         break;
       }
 
-      const chunk = this.reader.read();
-      if (chunk === null) {
+      const chunk: string | null = this.reader.read();
+
+      if (!chunk) {
         // stream 끝: buffer에 남은 전부를 입력으로 사용
         input = this.buffer;
         this.buffer = "";
         break;
       }
 
-      this.buffer += chunk.toString();
+      this.buffer += chunk;
     }
 
     const varName = ctx.VAR().getText();
     const value = parseInt(input.trim()) || 0;
+
     this.memory.set(varName, value);
   };
 
   visitWrite = (ctx: WriteContext): void => {
     const exprNode = ctx.expr();
-
     const result: number = this.visit(exprNode);
+
     this.writer.write(result.toString() + "\n");
   };
 }
