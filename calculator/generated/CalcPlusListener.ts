@@ -10,10 +10,13 @@ import { MulDivContext } from "./CalcPlusParser.js";
 import { AddSubContext } from "./CalcPlusParser.js";
 import { Calc1Context } from "./CalcPlusParser.js";
 import { ExprAssignContext } from "./CalcPlusParser.js";
+import { ReadAssignContext } from "./CalcPlusParser.js";
 import { IfElseContext } from "./CalcPlusParser.js";
+import { WriteContext } from "./CalcPlusParser.js";
 import { Calc2Context } from "./CalcPlusParser.js";
 import { CondContext } from "./CalcPlusParser.js";
 import { BlockContext } from "./CalcPlusParser.js";
+import { Calc3Context } from "./CalcPlusParser.js";
 
 
 /**
@@ -114,6 +117,18 @@ export class CalcPlusListener implements ParseTreeListener {
      */
     exitExprAssign?: (ctx: ExprAssignContext) => void;
     /**
+     * Enter a parse tree produced by the `ReadAssign`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    enterReadAssign?: (ctx: ReadAssignContext) => void;
+    /**
+     * Exit a parse tree produced by the `ReadAssign`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    exitReadAssign?: (ctx: ReadAssignContext) => void;
+    /**
      * Enter a parse tree produced by the `IfElse`
      * labeled alternative in `CalcPlusParser.stmt`.
      * @param ctx the parse tree
@@ -125,6 +140,18 @@ export class CalcPlusListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitIfElse?: (ctx: IfElseContext) => void;
+    /**
+     * Enter a parse tree produced by the `Write`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    enterWrite?: (ctx: WriteContext) => void;
+    /**
+     * Exit a parse tree produced by the `Write`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    exitWrite?: (ctx: WriteContext) => void;
     /**
      * Enter a parse tree produced by `CalcPlusParser.calc2`.
      * @param ctx the parse tree
@@ -155,6 +182,16 @@ export class CalcPlusListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitBlock?: (ctx: BlockContext) => void;
+    /**
+     * Enter a parse tree produced by `CalcPlusParser.calc3`.
+     * @param ctx the parse tree
+     */
+    enterCalc3?: (ctx: Calc3Context) => void;
+    /**
+     * Exit a parse tree produced by `CalcPlusParser.calc3`.
+     * @param ctx the parse tree
+     */
+    exitCalc3?: (ctx: Calc3Context) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

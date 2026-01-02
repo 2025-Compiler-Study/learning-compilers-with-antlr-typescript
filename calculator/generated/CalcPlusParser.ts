@@ -29,9 +29,11 @@ export class CalcPlusParser extends antlr.Parser {
     public static readonly T__15 = 16;
     public static readonly T__16 = 17;
     public static readonly T__17 = 18;
-    public static readonly WS = 19;
-    public static readonly INT = 20;
-    public static readonly VAR = 21;
+    public static readonly T__18 = 19;
+    public static readonly T__19 = 20;
+    public static readonly WS = 21;
+    public static readonly INT = 22;
+    public static readonly VAR = 23;
     public static readonly RULE_calc0 = 0;
     public static readonly RULE_expr = 1;
     public static readonly RULE_calc1 = 2;
@@ -39,18 +41,21 @@ export class CalcPlusParser extends antlr.Parser {
     public static readonly RULE_calc2 = 4;
     public static readonly RULE_cond = 5;
     public static readonly RULE_block = 6;
+    public static readonly RULE_calc3 = 7;
 
     public static readonly literalNames = [
-        null, "'*'", "'/'", "'+'", "'-'", "'('", "')'", "'='", "';'", "'if'", 
-        "'else'", "'=='", "'!='", "'>'", "'>='", "'<'", "'<='", "'{'", "'}'"
+        null, "'*'", "'/'", "'+'", "'-'", "'('", "')'", "'='", "';'", "'read'", 
+        "'if'", "'else'", "'write'", "'=='", "'!='", "'>'", "'>='", "'<'", 
+        "'<='", "'{'", "'}'"
     ];
 
     public static readonly symbolicNames = [
         null, null, null, null, null, null, null, null, null, null, null, 
-        null, null, null, null, null, null, null, null, "WS", "INT", "VAR"
+        null, null, null, null, null, null, null, null, null, null, "WS", 
+        "INT", "VAR"
     ];
     public static readonly ruleNames = [
-        "calc0", "expr", "calc1", "stmt", "calc2", "cond", "block",
+        "calc0", "expr", "calc1", "stmt", "calc2", "cond", "block", "calc3",
     ];
 
     public get grammarFileName(): string { return "CalcPlus.g4"; }
@@ -73,9 +78,9 @@ export class CalcPlusParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 14;
+            this.state = 16;
             this.expr(0);
-            this.state = 15;
+            this.state = 17;
             this.match(CalcPlusParser.EOF);
             }
         }
@@ -111,7 +116,7 @@ export class CalcPlusParser extends antlr.Parser {
             let alternative: number;
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 24;
+            this.state = 26;
             this.errorHandler.sync(this);
             switch (this.tokenStream.LA(1)) {
             case CalcPlusParser.INT:
@@ -120,7 +125,7 @@ export class CalcPlusParser extends antlr.Parser {
                 this.context = localContext;
                 previousContext = localContext;
 
-                this.state = 18;
+                this.state = 20;
                 this.match(CalcPlusParser.INT);
                 }
                 break;
@@ -129,7 +134,7 @@ export class CalcPlusParser extends antlr.Parser {
                 localContext = new VarContext(localContext);
                 this.context = localContext;
                 previousContext = localContext;
-                this.state = 19;
+                this.state = 21;
                 this.match(CalcPlusParser.VAR);
                 }
                 break;
@@ -138,11 +143,11 @@ export class CalcPlusParser extends antlr.Parser {
                 localContext = new ParensContext(localContext);
                 this.context = localContext;
                 previousContext = localContext;
-                this.state = 20;
-                this.match(CalcPlusParser.T__4);
-                this.state = 21;
-                this.expr(0);
                 this.state = 22;
+                this.match(CalcPlusParser.T__4);
+                this.state = 23;
+                this.expr(0);
+                this.state = 24;
                 this.match(CalcPlusParser.T__5);
                 }
                 break;
@@ -150,7 +155,7 @@ export class CalcPlusParser extends antlr.Parser {
                 throw new antlr.NoViableAltException(this);
             }
             this.context!.stop = this.tokenStream.LT(-1);
-            this.state = 34;
+            this.state = 36;
             this.errorHandler.sync(this);
             alternative = this.interpreter.adaptivePredict(this.tokenStream, 2, this.context);
             while (alternative !== 2 && alternative !== antlr.ATN.INVALID_ALT_NUMBER) {
@@ -160,18 +165,18 @@ export class CalcPlusParser extends antlr.Parser {
                     }
                     previousContext = localContext;
                     {
-                    this.state = 32;
+                    this.state = 34;
                     this.errorHandler.sync(this);
                     switch (this.interpreter.adaptivePredict(this.tokenStream, 1, this.context) ) {
                     case 1:
                         {
                         localContext = new MulDivContext(new ExprContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, CalcPlusParser.RULE_expr);
-                        this.state = 26;
+                        this.state = 28;
                         if (!(this.precpred(this.context, 5))) {
                             throw this.createFailedPredicateException("this.precpred(this.context, 5)");
                         }
-                        this.state = 27;
+                        this.state = 29;
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 1 || _la === 2)) {
                         this.errorHandler.recoverInline(this);
@@ -180,7 +185,7 @@ export class CalcPlusParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 28;
+                        this.state = 30;
                         this.expr(6);
                         }
                         break;
@@ -188,11 +193,11 @@ export class CalcPlusParser extends antlr.Parser {
                         {
                         localContext = new AddSubContext(new ExprContext(parentContext, parentState));
                         this.pushNewRecursionContext(localContext, _startState, CalcPlusParser.RULE_expr);
-                        this.state = 29;
+                        this.state = 31;
                         if (!(this.precpred(this.context, 4))) {
                             throw this.createFailedPredicateException("this.precpred(this.context, 4)");
                         }
-                        this.state = 30;
+                        this.state = 32;
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 3 || _la === 4)) {
                         this.errorHandler.recoverInline(this);
@@ -201,14 +206,14 @@ export class CalcPlusParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 31;
+                        this.state = 33;
                         this.expr(5);
                         }
                         break;
                     }
                     }
                 }
-                this.state = 36;
+                this.state = 38;
                 this.errorHandler.sync(this);
                 alternative = this.interpreter.adaptivePredict(this.tokenStream, 2, this.context);
             }
@@ -234,21 +239,21 @@ export class CalcPlusParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 38;
+            this.state = 40;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             do {
                 {
                 {
-                this.state = 37;
+                this.state = 39;
                 this.stmt();
                 }
                 }
-                this.state = 40;
+                this.state = 42;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-            } while (_la === 9 || _la === 21);
-            this.state = 42;
+            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 8393728) !== 0));
+            this.state = 44;
             this.match(CalcPlusParser.EOF);
             }
         }
@@ -270,53 +275,85 @@ export class CalcPlusParser extends antlr.Parser {
         this.enterRule(localContext, 6, CalcPlusParser.RULE_stmt);
         let _la: number;
         try {
-            this.state = 58;
+            this.state = 72;
             this.errorHandler.sync(this);
-            switch (this.tokenStream.LA(1)) {
-            case CalcPlusParser.VAR:
+            switch (this.interpreter.adaptivePredict(this.tokenStream, 5, this.context) ) {
+            case 1:
                 localContext = new ExprAssignContext(localContext);
                 this.enterOuterAlt(localContext, 1);
                 {
-                this.state = 44;
-                this.match(CalcPlusParser.VAR);
-                this.state = 45;
-                this.match(CalcPlusParser.T__6);
                 this.state = 46;
-                this.expr(0);
+                this.match(CalcPlusParser.VAR);
                 this.state = 47;
+                this.match(CalcPlusParser.T__6);
+                this.state = 48;
+                this.expr(0);
+                this.state = 49;
                 this.match(CalcPlusParser.T__7);
                 }
                 break;
-            case CalcPlusParser.T__8:
-                localContext = new IfElseContext(localContext);
+            case 2:
+                localContext = new ReadAssignContext(localContext);
                 this.enterOuterAlt(localContext, 2);
                 {
-                this.state = 49;
-                this.match(CalcPlusParser.T__8);
-                this.state = 50;
-                this.match(CalcPlusParser.T__4);
                 this.state = 51;
-                this.cond();
+                this.match(CalcPlusParser.VAR);
                 this.state = 52;
-                this.match(CalcPlusParser.T__5);
+                this.match(CalcPlusParser.T__6);
                 this.state = 53;
-                (localContext as IfElseContext)._thenBlock = this.block();
+                this.match(CalcPlusParser.T__8);
+                this.state = 54;
+                this.match(CalcPlusParser.T__4);
+                this.state = 55;
+                this.match(CalcPlusParser.T__5);
                 this.state = 56;
+                this.match(CalcPlusParser.T__7);
+                }
+                break;
+            case 3:
+                localContext = new IfElseContext(localContext);
+                this.enterOuterAlt(localContext, 3);
+                {
+                this.state = 57;
+                this.match(CalcPlusParser.T__9);
+                this.state = 58;
+                this.match(CalcPlusParser.T__4);
+                this.state = 59;
+                this.cond();
+                this.state = 60;
+                this.match(CalcPlusParser.T__5);
+                this.state = 61;
+                (localContext as IfElseContext)._thenBlock = this.block();
+                this.state = 64;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 10) {
+                if (_la === 11) {
                     {
-                    this.state = 54;
-                    this.match(CalcPlusParser.T__9);
-                    this.state = 55;
+                    this.state = 62;
+                    this.match(CalcPlusParser.T__10);
+                    this.state = 63;
                     (localContext as IfElseContext)._elseBlock = this.block();
                     }
                 }
 
                 }
                 break;
-            default:
-                throw new antlr.NoViableAltException(this);
+            case 4:
+                localContext = new WriteContext(localContext);
+                this.enterOuterAlt(localContext, 4);
+                {
+                this.state = 66;
+                this.match(CalcPlusParser.T__11);
+                this.state = 67;
+                this.match(CalcPlusParser.T__4);
+                this.state = 68;
+                this.expr(0);
+                this.state = 69;
+                this.match(CalcPlusParser.T__5);
+                this.state = 70;
+                this.match(CalcPlusParser.T__7);
+                }
+                break;
             }
         }
         catch (re) {
@@ -339,21 +376,21 @@ export class CalcPlusParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 61;
+            this.state = 75;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             do {
                 {
                 {
-                this.state = 60;
+                this.state = 74;
                 this.stmt();
                 }
                 }
-                this.state = 63;
+                this.state = 77;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-            } while (_la === 9 || _la === 21);
-            this.state = 65;
+            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 8393728) !== 0));
+            this.state = 79;
             this.match(CalcPlusParser.EOF);
             }
         }
@@ -377,19 +414,19 @@ export class CalcPlusParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 67;
+            this.state = 81;
             this.expr(0);
-            this.state = 68;
+            this.state = 82;
             localContext._cmpOp = this.tokenStream.LT(1);
             _la = this.tokenStream.LA(1);
-            if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 129024) !== 0))) {
+            if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 516096) !== 0))) {
                 localContext._cmpOp = this.errorHandler.recoverInline(this);
             }
             else {
                 this.errorHandler.reportMatch(this);
                 this.consume();
             }
-            this.state = 69;
+            this.state = 83;
             this.expr(0);
             }
         }
@@ -413,24 +450,62 @@ export class CalcPlusParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 71;
-            this.match(CalcPlusParser.T__16);
-            this.state = 75;
+            this.state = 85;
+            this.match(CalcPlusParser.T__18);
+            this.state = 89;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while (_la === 9 || _la === 21) {
+            while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 8393728) !== 0)) {
                 {
                 {
-                this.state = 72;
+                this.state = 86;
                 this.stmt();
                 }
                 }
-                this.state = 77;
+                this.state = 91;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             }
-            this.state = 78;
-            this.match(CalcPlusParser.T__17);
+            this.state = 92;
+            this.match(CalcPlusParser.T__19);
+            }
+        }
+        catch (re) {
+            if (re instanceof antlr.RecognitionException) {
+                this.errorHandler.reportError(this, re);
+                this.errorHandler.recover(this, re);
+            } else {
+                throw re;
+            }
+        }
+        finally {
+            this.exitRule();
+        }
+        return localContext;
+    }
+    public calc3(): Calc3Context {
+        let localContext = new Calc3Context(this.context, this.state);
+        this.enterRule(localContext, 14, CalcPlusParser.RULE_calc3);
+        let _la: number;
+        try {
+            this.enterOuterAlt(localContext, 1);
+            {
+            this.state = 95;
+            this.errorHandler.sync(this);
+            _la = this.tokenStream.LA(1);
+            do {
+                {
+                {
+                this.state = 94;
+                this.stmt();
+                }
+                }
+                this.state = 97;
+                this.errorHandler.sync(this);
+                _la = this.tokenStream.LA(1);
+            } while ((((_la) & ~0x1F) === 0 && ((1 << _la) & 8393728) !== 0));
+            this.state = 99;
+            this.match(CalcPlusParser.EOF);
             }
         }
         catch (re) {
@@ -465,31 +540,38 @@ export class CalcPlusParser extends antlr.Parser {
     }
 
     public static readonly _serializedATN: number[] = [
-        4,1,21,81,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
-        6,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,25,8,1,1,1,1,1,1,1,
-        1,1,1,1,1,1,5,1,33,8,1,10,1,12,1,36,9,1,1,2,4,2,39,8,2,11,2,12,2,
-        40,1,2,1,2,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,57,
-        8,3,3,3,59,8,3,1,4,4,4,62,8,4,11,4,12,4,63,1,4,1,4,1,5,1,5,1,5,1,
-        5,1,6,1,6,5,6,74,8,6,10,6,12,6,77,9,6,1,6,1,6,1,6,0,1,2,7,0,2,4,
-        6,8,10,12,0,3,1,0,1,2,1,0,3,4,1,0,11,16,82,0,14,1,0,0,0,2,24,1,0,
-        0,0,4,38,1,0,0,0,6,58,1,0,0,0,8,61,1,0,0,0,10,67,1,0,0,0,12,71,1,
-        0,0,0,14,15,3,2,1,0,15,16,5,0,0,1,16,1,1,0,0,0,17,18,6,1,-1,0,18,
-        25,5,20,0,0,19,25,5,21,0,0,20,21,5,5,0,0,21,22,3,2,1,0,22,23,5,6,
-        0,0,23,25,1,0,0,0,24,17,1,0,0,0,24,19,1,0,0,0,24,20,1,0,0,0,25,34,
-        1,0,0,0,26,27,10,5,0,0,27,28,7,0,0,0,28,33,3,2,1,6,29,30,10,4,0,
-        0,30,31,7,1,0,0,31,33,3,2,1,5,32,26,1,0,0,0,32,29,1,0,0,0,33,36,
-        1,0,0,0,34,32,1,0,0,0,34,35,1,0,0,0,35,3,1,0,0,0,36,34,1,0,0,0,37,
-        39,3,6,3,0,38,37,1,0,0,0,39,40,1,0,0,0,40,38,1,0,0,0,40,41,1,0,0,
-        0,41,42,1,0,0,0,42,43,5,0,0,1,43,5,1,0,0,0,44,45,5,21,0,0,45,46,
-        5,7,0,0,46,47,3,2,1,0,47,48,5,8,0,0,48,59,1,0,0,0,49,50,5,9,0,0,
-        50,51,5,5,0,0,51,52,3,10,5,0,52,53,5,6,0,0,53,56,3,12,6,0,54,55,
-        5,10,0,0,55,57,3,12,6,0,56,54,1,0,0,0,56,57,1,0,0,0,57,59,1,0,0,
-        0,58,44,1,0,0,0,58,49,1,0,0,0,59,7,1,0,0,0,60,62,3,6,3,0,61,60,1,
-        0,0,0,62,63,1,0,0,0,63,61,1,0,0,0,63,64,1,0,0,0,64,65,1,0,0,0,65,
-        66,5,0,0,1,66,9,1,0,0,0,67,68,3,2,1,0,68,69,7,2,0,0,69,70,3,2,1,
-        0,70,11,1,0,0,0,71,75,5,17,0,0,72,74,3,6,3,0,73,72,1,0,0,0,74,77,
-        1,0,0,0,75,73,1,0,0,0,75,76,1,0,0,0,76,78,1,0,0,0,77,75,1,0,0,0,
-        78,79,5,18,0,0,79,13,1,0,0,0,8,24,32,34,40,56,58,63,75
+        4,1,23,102,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,
+        6,2,7,7,7,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,27,8,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,5,1,35,8,1,10,1,12,1,38,9,1,1,2,4,2,41,8,2,11,
+        2,12,2,42,1,2,1,2,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,3,1,
+        3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,65,8,3,1,3,1,3,1,3,1,3,1,3,1,3,3,3,
+        73,8,3,1,4,4,4,76,8,4,11,4,12,4,77,1,4,1,4,1,5,1,5,1,5,1,5,1,6,1,
+        6,5,6,88,8,6,10,6,12,6,91,9,6,1,6,1,6,1,7,4,7,96,8,7,11,7,12,7,97,
+        1,7,1,7,1,7,0,1,2,8,0,2,4,6,8,10,12,14,0,3,1,0,1,2,1,0,3,4,1,0,13,
+        18,105,0,16,1,0,0,0,2,26,1,0,0,0,4,40,1,0,0,0,6,72,1,0,0,0,8,75,
+        1,0,0,0,10,81,1,0,0,0,12,85,1,0,0,0,14,95,1,0,0,0,16,17,3,2,1,0,
+        17,18,5,0,0,1,18,1,1,0,0,0,19,20,6,1,-1,0,20,27,5,22,0,0,21,27,5,
+        23,0,0,22,23,5,5,0,0,23,24,3,2,1,0,24,25,5,6,0,0,25,27,1,0,0,0,26,
+        19,1,0,0,0,26,21,1,0,0,0,26,22,1,0,0,0,27,36,1,0,0,0,28,29,10,5,
+        0,0,29,30,7,0,0,0,30,35,3,2,1,6,31,32,10,4,0,0,32,33,7,1,0,0,33,
+        35,3,2,1,5,34,28,1,0,0,0,34,31,1,0,0,0,35,38,1,0,0,0,36,34,1,0,0,
+        0,36,37,1,0,0,0,37,3,1,0,0,0,38,36,1,0,0,0,39,41,3,6,3,0,40,39,1,
+        0,0,0,41,42,1,0,0,0,42,40,1,0,0,0,42,43,1,0,0,0,43,44,1,0,0,0,44,
+        45,5,0,0,1,45,5,1,0,0,0,46,47,5,23,0,0,47,48,5,7,0,0,48,49,3,2,1,
+        0,49,50,5,8,0,0,50,73,1,0,0,0,51,52,5,23,0,0,52,53,5,7,0,0,53,54,
+        5,9,0,0,54,55,5,5,0,0,55,56,5,6,0,0,56,73,5,8,0,0,57,58,5,10,0,0,
+        58,59,5,5,0,0,59,60,3,10,5,0,60,61,5,6,0,0,61,64,3,12,6,0,62,63,
+        5,11,0,0,63,65,3,12,6,0,64,62,1,0,0,0,64,65,1,0,0,0,65,73,1,0,0,
+        0,66,67,5,12,0,0,67,68,5,5,0,0,68,69,3,2,1,0,69,70,5,6,0,0,70,71,
+        5,8,0,0,71,73,1,0,0,0,72,46,1,0,0,0,72,51,1,0,0,0,72,57,1,0,0,0,
+        72,66,1,0,0,0,73,7,1,0,0,0,74,76,3,6,3,0,75,74,1,0,0,0,76,77,1,0,
+        0,0,77,75,1,0,0,0,77,78,1,0,0,0,78,79,1,0,0,0,79,80,5,0,0,1,80,9,
+        1,0,0,0,81,82,3,2,1,0,82,83,7,2,0,0,83,84,3,2,1,0,84,11,1,0,0,0,
+        85,89,5,19,0,0,86,88,3,6,3,0,87,86,1,0,0,0,88,91,1,0,0,0,89,87,1,
+        0,0,0,89,90,1,0,0,0,90,92,1,0,0,0,91,89,1,0,0,0,92,93,5,20,0,0,93,
+        13,1,0,0,0,94,96,3,6,3,0,95,94,1,0,0,0,96,97,1,0,0,0,97,95,1,0,0,
+        0,97,98,1,0,0,0,98,99,1,0,0,0,99,100,5,0,0,1,100,15,1,0,0,0,9,26,
+        34,36,42,64,72,77,89,97
     ];
 
     private static __ATN: antlr.ATN;
@@ -778,6 +860,32 @@ export class ExprAssignContext extends StmtContext {
         }
     }
 }
+export class ReadAssignContext extends StmtContext {
+    public constructor(ctx: StmtContext) {
+        super(ctx.parent, ctx.invokingState);
+        super.copyFrom(ctx);
+    }
+    public VAR(): antlr.TerminalNode {
+        return this.getToken(CalcPlusParser.VAR, 0)!;
+    }
+    public override enterRule(listener: CalcPlusListener): void {
+        if(listener.enterReadAssign) {
+             listener.enterReadAssign(this);
+        }
+    }
+    public override exitRule(listener: CalcPlusListener): void {
+        if(listener.exitReadAssign) {
+             listener.exitReadAssign(this);
+        }
+    }
+    public override accept<Result>(visitor: CalcPlusVisitor<Result>): Result | null {
+        if (visitor.visitReadAssign) {
+            return visitor.visitReadAssign(this);
+        } else {
+            return visitor.visitChildren(this);
+        }
+    }
+}
 export class IfElseContext extends StmtContext {
     public _thenBlock?: BlockContext;
     public _elseBlock?: BlockContext;
@@ -810,6 +918,32 @@ export class IfElseContext extends StmtContext {
     public override accept<Result>(visitor: CalcPlusVisitor<Result>): Result | null {
         if (visitor.visitIfElse) {
             return visitor.visitIfElse(this);
+        } else {
+            return visitor.visitChildren(this);
+        }
+    }
+}
+export class WriteContext extends StmtContext {
+    public constructor(ctx: StmtContext) {
+        super(ctx.parent, ctx.invokingState);
+        super.copyFrom(ctx);
+    }
+    public expr(): ExprContext {
+        return this.getRuleContext(0, ExprContext)!;
+    }
+    public override enterRule(listener: CalcPlusListener): void {
+        if(listener.enterWrite) {
+             listener.enterWrite(this);
+        }
+    }
+    public override exitRule(listener: CalcPlusListener): void {
+        if(listener.exitWrite) {
+             listener.exitWrite(this);
+        }
+    }
+    public override accept<Result>(visitor: CalcPlusVisitor<Result>): Result | null {
+        if (visitor.visitWrite) {
+            return visitor.visitWrite(this);
         } else {
             return visitor.visitChildren(this);
         }
@@ -922,6 +1056,45 @@ export class BlockContext extends antlr.ParserRuleContext {
     public override accept<Result>(visitor: CalcPlusVisitor<Result>): Result | null {
         if (visitor.visitBlock) {
             return visitor.visitBlock(this);
+        } else {
+            return visitor.visitChildren(this);
+        }
+    }
+}
+
+
+export class Calc3Context extends antlr.ParserRuleContext {
+    public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
+        super(parent, invokingState);
+    }
+    public EOF(): antlr.TerminalNode {
+        return this.getToken(CalcPlusParser.EOF, 0)!;
+    }
+    public stmt(): StmtContext[];
+    public stmt(i: number): StmtContext | null;
+    public stmt(i?: number): StmtContext[] | StmtContext | null {
+        if (i === undefined) {
+            return this.getRuleContexts(StmtContext);
+        }
+
+        return this.getRuleContext(i, StmtContext);
+    }
+    public override get ruleIndex(): number {
+        return CalcPlusParser.RULE_calc3;
+    }
+    public override enterRule(listener: CalcPlusListener): void {
+        if(listener.enterCalc3) {
+             listener.enterCalc3(this);
+        }
+    }
+    public override exitRule(listener: CalcPlusListener): void {
+        if(listener.exitCalc3) {
+             listener.exitCalc3(this);
+        }
+    }
+    public override accept<Result>(visitor: CalcPlusVisitor<Result>): Result | null {
+        if (visitor.visitCalc3) {
+            return visitor.visitCalc3(this);
         } else {
             return visitor.visitChildren(this);
         }
