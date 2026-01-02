@@ -10,7 +10,8 @@
     "antlr:v": "antlr-ng --generate-visitor -Dlanguage=TypeScript",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "calc3:run": "tsx calculator/calc3/cmd/cli.ts"
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +19,7 @@
     "antlr4ng": "^3.0.16"
   },
   "devDependencies": {
+    "@types/node": "^25.0.3",
     "antlr-ng": "^1.0.10",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
