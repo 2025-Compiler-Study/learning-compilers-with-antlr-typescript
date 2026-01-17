@@ -3,8 +3,6 @@ import { Calc3Context, ReadAssignContext, WriteContext } from "../generated/Calc
 import { Readable, Writable } from "stream";
 
 export class Calc3Visitor extends Calc2Visitor {
-  private buffer: string = "";
-
   constructor(private reader: Readable, private writer: Writable) {
     super();
   }
@@ -18,29 +16,11 @@ export class Calc3Visitor extends Calc2Visitor {
   };
 
   visitReadAssign = (ctx: ReadAssignContext): void => {
-    let input = "";
+    const chunk = this.reader.read();
+    const lines = chunk.split("\n");
+    const input = lines[0];
 
-    while (true) {
-      const lines = this.buffer.split("\n");
-
-      if (lines.length > 1) {
-        // buffer에 \n이 있으면: 첫 줄을 가져오고 나머지는 buffer에 보관
-        input = lines[0] ?? "";
-        this.buffer = lines.slice(1).join("\n");
-        break;
-      }
-
-      const chunk: string | null = this.reader.read();
-
-      if (!chunk) {
-        // stream 끝: buffer에 남은 전부를 입력으로 사용
-        input = this.buffer;
-        this.buffer = "";
-        break;
-      }
-
-      this.buffer += chunk;
-    }
+    this.reader = Readable.from([lines.slice(1).join("\n")]);
 
     const varName = ctx.VAR().getText();
     const value = parseInt(input.trim()) || 0;
