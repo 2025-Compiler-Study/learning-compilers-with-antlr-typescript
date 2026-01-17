@@ -1,6 +1,7 @@
 import { readFileSync } from "fs";
 import { calculateWithVisitor } from "../helper";
 import { Readable } from "stream";
+import { text } from "stream/consumers";
 
 const main = async () => {
   const args = process.argv.slice(2);
@@ -14,16 +15,9 @@ const main = async () => {
 
   try {
     const code = readFileSync(filePath, "utf-8");
-
-    let stdinData = "";
-    if (!process.stdin.isTTY) {
-      process.stdin.setEncoding("utf-8");
-      for await (const chunk of process.stdin) {
-        stdinData += chunk;
-      }
-    }
-
+    const stdinData = await text(process.stdin);
     const stdin = Readable.from([stdinData]);
+
     calculateWithVisitor(code, stdin, process.stdout);
   } catch (error) {
     if (error instanceof Error) {
