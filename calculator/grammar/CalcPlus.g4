@@ -18,7 +18,7 @@ stmt    :   VAR '=' expr ';'                    # ExprAssign
         ;
 
 calc2   :   (stmt)+ EOF;
-cond    :   expr ('=='|'!='|'>'|'>='|'<'|'<=') expr ;
+cond    :   expr cmpOp=('=='|'!='|'>'|'>='|'<'|'<=') expr ;
 block   :   '{' (stmt)* '}' ;
 
 calc3   :   (stmt)+ EOF;
