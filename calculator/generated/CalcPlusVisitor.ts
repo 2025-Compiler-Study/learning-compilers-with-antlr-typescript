@@ -13,10 +13,13 @@ import { ExprAssignContext } from "./CalcPlusParser.js";
 import { ReadAssignContext } from "./CalcPlusParser.js";
 import { IfElseContext } from "./CalcPlusParser.js";
 import { WriteContext } from "./CalcPlusParser.js";
+import { DeclareContext } from "./CalcPlusParser.js";
+import { StmtBlockContext } from "./CalcPlusParser.js";
 import { Calc2Context } from "./CalcPlusParser.js";
 import { CondContext } from "./CalcPlusParser.js";
 import { BlockContext } from "./CalcPlusParser.js";
 import { Calc3Context } from "./CalcPlusParser.js";
+import { Calc4Context } from "./CalcPlusParser.js";
 
 
 /**
@@ -103,6 +106,20 @@ export class CalcPlusVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      */
     visitWrite?: (ctx: WriteContext) => Result;
     /**
+     * Visit a parse tree produced by the `Declare`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitDeclare?: (ctx: DeclareContext) => Result;
+    /**
+     * Visit a parse tree produced by the `StmtBlock`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitStmtBlock?: (ctx: StmtBlockContext) => Result;
+    /**
      * Visit a parse tree produced by `CalcPlusParser.calc2`.
      * @param ctx the parse tree
      * @return the visitor result
@@ -126,5 +143,11 @@ export class CalcPlusVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitCalc3?: (ctx: Calc3Context) => Result;
+    /**
+     * Visit a parse tree produced by `CalcPlusParser.calc4`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitCalc4?: (ctx: Calc4Context) => Result;
 }
 

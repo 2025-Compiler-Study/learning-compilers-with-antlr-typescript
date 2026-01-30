@@ -13,10 +13,13 @@ import { ExprAssignContext } from "./CalcPlusParser.js";
 import { ReadAssignContext } from "./CalcPlusParser.js";
 import { IfElseContext } from "./CalcPlusParser.js";
 import { WriteContext } from "./CalcPlusParser.js";
+import { DeclareContext } from "./CalcPlusParser.js";
+import { StmtBlockContext } from "./CalcPlusParser.js";
 import { Calc2Context } from "./CalcPlusParser.js";
 import { CondContext } from "./CalcPlusParser.js";
 import { BlockContext } from "./CalcPlusParser.js";
 import { Calc3Context } from "./CalcPlusParser.js";
+import { Calc4Context } from "./CalcPlusParser.js";
 
 
 /**
@@ -153,6 +156,30 @@ export class CalcPlusListener implements ParseTreeListener {
      */
     exitWrite?: (ctx: WriteContext) => void;
     /**
+     * Enter a parse tree produced by the `Declare`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    enterDeclare?: (ctx: DeclareContext) => void;
+    /**
+     * Exit a parse tree produced by the `Declare`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    exitDeclare?: (ctx: DeclareContext) => void;
+    /**
+     * Enter a parse tree produced by the `StmtBlock`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    enterStmtBlock?: (ctx: StmtBlockContext) => void;
+    /**
+     * Exit a parse tree produced by the `StmtBlock`
+     * labeled alternative in `CalcPlusParser.stmt`.
+     * @param ctx the parse tree
+     */
+    exitStmtBlock?: (ctx: StmtBlockContext) => void;
+    /**
      * Enter a parse tree produced by `CalcPlusParser.calc2`.
      * @param ctx the parse tree
      */
@@ -192,6 +219,16 @@ export class CalcPlusListener implements ParseTreeListener {
      * @param ctx the parse tree
      */
     exitCalc3?: (ctx: Calc3Context) => void;
+    /**
+     * Enter a parse tree produced by `CalcPlusParser.calc4`.
+     * @param ctx the parse tree
+     */
+    enterCalc4?: (ctx: Calc4Context) => void;
+    /**
+     * Exit a parse tree produced by `CalcPlusParser.calc4`.
+     * @param ctx the parse tree
+     */
+    exitCalc4?: (ctx: Calc4Context) => void;
 
     visitTerminal(node: TerminalNode): void {}
     visitErrorNode(node: ErrorNode): void {}

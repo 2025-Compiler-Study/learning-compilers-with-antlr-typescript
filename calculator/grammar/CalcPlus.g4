@@ -13,13 +13,17 @@ stmt    :   VAR '=' expr ';'                    # ExprAssign
         |   'if' '(' cond ')' thenBlock=block
             ('else' elseBlock=block)?           # IfElse
         |   'write' '(' expr ')' ';'            # Write
+        |   'int' VAR (',' VAR)* ';'            # Declare
+        |   block                               # StmtBlock
         ;
 
 calc2   :   (stmt)+ EOF;
-cond    :   expr cmpOp=('=='|'!='|'>'|'>='|'<'|'<=') expr ;
+cond    :   expr ('=='|'!='|'>'|'>='|'<'|'<=') expr ;
 block   :   '{' (stmt)* '}' ;
 
 calc3   :   (stmt)+ EOF;
+
+calc4   :   (stmt)+ EOF;
 
 WS  : [ \t\r\n]+ -> skip;
 INT : [0-9]+ ;
