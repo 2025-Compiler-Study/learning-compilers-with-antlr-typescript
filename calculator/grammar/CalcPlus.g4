@@ -1,7 +1,7 @@
 grammar CalcPlus;
 calc0   :   expr EOF ;
-expr    :   expr ('*'|'/') expr # MulDiv
-        |   expr ('+'|'-') expr # AddSub
+expr    :   expr op=('*'|'/') expr # MulDiv
+        |   expr op=('+'|'-') expr # AddSub
         |   INT                 # Int
         |   VAR                 # Var
         |   '(' expr ')'        # Parens

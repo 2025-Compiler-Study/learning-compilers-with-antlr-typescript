@@ -181,9 +181,10 @@ export class CalcPlusParser extends antlr.Parser {
                             throw this.createFailedPredicateException("this.precpred(this.context, 5)");
                         }
                         this.state = 31;
+                        (localContext as MulDivContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 1 || _la === 2)) {
-                        this.errorHandler.recoverInline(this);
+                            (localContext as MulDivContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -202,9 +203,10 @@ export class CalcPlusParser extends antlr.Parser {
                             throw this.createFailedPredicateException("this.precpred(this.context, 4)");
                         }
                         this.state = 34;
+                        (localContext as AddSubContext)._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 3 || _la === 4)) {
-                        this.errorHandler.recoverInline(this);
+                            (localContext as AddSubContext)._op = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -801,6 +803,7 @@ export class ParensContext extends ExprContext {
     }
 }
 export class MulDivContext extends ExprContext {
+    public _op?: Token | null;
     public constructor(ctx: ExprContext) {
         super(ctx.parent, ctx.invokingState);
         super.copyFrom(ctx);
@@ -833,6 +836,7 @@ export class MulDivContext extends ExprContext {
     }
 }
 export class AddSubContext extends ExprContext {
+    public _op?: Token | null;
     public constructor(ctx: ExprContext) {
         super(ctx.parent, ctx.invokingState);
         super.copyFrom(ctx);
