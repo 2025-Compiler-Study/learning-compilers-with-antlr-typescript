@@ -5,7 +5,7 @@ type SourceSpan = {
   endColumn: number;
 };
 
-abstract class AstNode {
+export abstract class AstNode {
   constructor(public readonly span?: SourceSpan) {}
 }
 
@@ -18,7 +18,7 @@ export class Program extends AstNode {
   }
 }
 
-abstract class Stmt extends AstNode {}
+export abstract class Stmt extends AstNode {}
 
 export class BlockStmt extends Stmt {
   constructor(
@@ -78,7 +78,7 @@ export class IfStmt extends Stmt {
   }
 }
 
-abstract class Expr extends AstNode {}
+export abstract class Expr extends AstNode {}
 
 export class IntLiteralExpr extends Expr {
   constructor(
@@ -114,7 +114,7 @@ export class BinaryExpr extends Expr {
 export class CallExpr extends Expr {
   constructor(
     public readonly callee: string,
-    public readonly args: Expr[],
+    public readonly args?: Expr[],
     span?: SourceSpan,
   ) {
     super(span);
