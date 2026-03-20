@@ -15,7 +15,6 @@ describe("printAst", () => {
 
   it("단순 프로그램 트리 출력", () => {
     printAst(buildAst("x = 5 * 3 + a * (5 - 9 / 3);"));
-    console.log(123, JSON.stringify(buildAst("x = 5 * 3 + a * (5 - 9 / 3);")));
     const lines = getLines();
     expect(lines[0]).toBe("Program");
     expect(lines.some((l) => l.includes("AssignStmt"))).toBe(true);
