@@ -14,6 +14,7 @@ import {
   AddSubContext,
   CondContext,
   BlockContext,
+  StmtContext,
 } from "../generated-ast/Calc5Parser";
 import { Calc5Visitor } from "../generated-ast/Calc5Visitor";
 import {
@@ -33,7 +34,7 @@ import {
   CallExpr,
 } from "./ast";
 
-export class AstBuilder extends Calc5Visitor<AstNode> {
+export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
   private getSpan(ctx: ParserRuleContext) {
     return {
       startLine: ctx.start?.line ?? 0,
@@ -43,15 +44,29 @@ export class AstBuilder extends Calc5Visitor<AstNode> {
     };
   }
 
+  private visitStmts(stmts: StmtContext[]): Stmt[] {
+    return stmts.flatMap((s) => {
+      const result = this.visit(s);
+      return Array.isArray(result) ? (result as Stmt[]) : [result as Stmt];
+    });
+  }
+
   visitProgram = (ctx: ProgramContext): Program => {
-    const statements = ctx.stmt().map((s) => this.visit(s) as Stmt);
-    return new Program(statements, this.getSpan(ctx));
+    return new Program(this.visitStmts(ctx.stmt()), this.getSpan(ctx));
   };
 
-  visitDeclare = (ctx: DeclareContext): DeclareStmt => {
-    const span = this.getSpan(ctx);
-    const declarations = ctx.VAR().map((v) => new VariableDecl("int", v.getText(), span));
-    return new DeclareStmt(declarations, span);
+  visitDeclare = (ctx: DeclareContext): DeclareStmt[] => {
+    const stmtSpan = this.getSpan(ctx);
+    return ctx.VAR().map((v) => {
+      const varName = v.getText();
+      const varSpan = {
+        startLine: v.symbol.line,
+        startColumn: v.symbol.column,
+        endLine: v.symbol.line,
+        endColumn: v.symbol.column + varName.length,
+      };
+      return new DeclareStmt([new VariableDecl("int", varName, varSpan)], stmtSpan);
+    });
   };
 
   visitExprAssign = (ctx: ExprAssignContext): AssignStmt => {
@@ -87,8 +102,7 @@ export class AstBuilder extends Calc5Visitor<AstNode> {
   };
 
   visitBlock = (ctx: BlockContext): BlockStmt => {
-    const statements = ctx.stmt().map((s) => this.visit(s) as Stmt);
-    return new BlockStmt(statements, this.getSpan(ctx));
+    return new BlockStmt(this.visitStmts(ctx.stmt()), this.getSpan(ctx));
   };
 
   visitInt = (ctx: IntContext): IntLiteralExpr => {
