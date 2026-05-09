@@ -1,4 +1,4 @@
-type SourceSpan = {
+export type SourceSpan = {
   startLine: number;
   startColumn: number;
   endLine: number;
