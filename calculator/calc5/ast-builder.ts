@@ -34,7 +34,7 @@ import {
   CallExpr,
 } from "./ast";
 import { SymbolTableStack } from "../calc4/symbol-table";
-import { SemanticError } from "./errors/semantic-error";
+import { SemanticError, SemanticErrorKind } from "./errors/semantic-error";
 
 export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
   private readonly symbolTable: SymbolTableStack = new SymbolTableStack();
@@ -61,7 +61,6 @@ export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
   }
 
   visitProgram = (ctx: ProgramContext): Program => {
-    //TODO - 최종 return이 AST가 아닌 errors가 되어야하나?
     return new Program(this.visitStmts(ctx.stmt()), this.getSpan(ctx));
   };
 
@@ -78,7 +77,7 @@ export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
       try {
         this.symbolTable.declareVariable(varName);
       } catch (e) {
-        this.errors.push(new SemanticError("redeclared-variable", varName, varSpan, (e as Error).message));
+        this.errors.push(new SemanticError(SemanticErrorKind.RedeclaredVariable, varName, varSpan, (e as Error).message));
       }
       return new DeclareStmt([new VariableDecl("int", varName, varSpan)], stmtSpan);
     });
@@ -97,7 +96,7 @@ export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
     try {
       this.symbolTable.getVariable(varName);
     } catch (e) {
-      this.errors.push(new SemanticError("undeclared-variable", varName, varSpan, (e as Error).message));
+      this.errors.push(new SemanticError(SemanticErrorKind.UndeclaredVariable,varName, varSpan, (e as Error).message));
     }
     const target = new IdentifierExpr(varName, varSpan);
     const value = this.visit(ctx.expr()) as Expr;
@@ -117,7 +116,7 @@ export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
     try {
       this.symbolTable.getVariable(varName);
     } catch (e) {
-      this.errors.push(new SemanticError("undeclared-variable", varName, varSpan, (e as Error).message));
+      this.errors.push(new SemanticError(SemanticErrorKind.UndeclaredVariable,varName, varSpan, (e as Error).message));
     }
     const target = new IdentifierExpr(varName, varSpan);
     const value = new CallExpr("read", undefined, span);
@@ -160,7 +159,7 @@ export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
     try {
       this.symbolTable.getVariable(name);
     } catch (e) {
-      this.errors.push(new SemanticError("undeclared-variable", name, span, (e as Error).message));
+      this.errors.push(new SemanticError(SemanticErrorKind.UndeclaredVariable,name, span, (e as Error).message));
     }
     return new IdentifierExpr(name, span);
   };

@@ -1,7 +1,12 @@
 import type { SourceSpan } from "../ast";
 import { CompilerError } from "./compiler-error";
 
-export type SemanticErrorKind = "undeclared-variable" | "redeclared-variable";
+export const SemanticErrorKind = {
+  UndeclaredVariable: "undeclared-variable",
+  RedeclaredVariable: "redeclared-variable",
+} as const;
+
+export type SemanticErrorKind = (typeof SemanticErrorKind)[keyof typeof SemanticErrorKind];
 
 export class SemanticError extends CompilerError {
   constructor(

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { buildAst } from "./parser";
 import { Interpreter } from "./interpreter";
+import { SemanticErrorKind } from "./errors/semantic-error";
 
 function run(code: string, inputs: number[] = []) {
   const writer = vi.fn();
@@ -81,7 +82,7 @@ describe("Executor", () => {
       int a;
     `);
     expect(errors).toHaveLength(1);
-    expect(errors[0]!.kind).toBe("redeclared-variable");
+    expect(errors[0]!.kind).toBe(SemanticErrorKind.RedeclaredVariable);
     expect(errors[0]!.name).toBe("a");
     expect(errors[0]!.message).toBe("변수 'a'는 이미 선언되었습니다");
   });
@@ -91,7 +92,7 @@ describe("Executor", () => {
       a = 1;
     `);
     expect(errors).toHaveLength(1);
-    expect(errors[0]!.kind).toBe("undeclared-variable");
+    expect(errors[0]!.kind).toBe(SemanticErrorKind.UndeclaredVariable);
     expect(errors[0]!.name).toBe("a");
     expect(errors[0]!.message).toBe("변수 'a'는 선언되지 않았습니다");
   });
