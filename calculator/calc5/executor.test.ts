@@ -1,17 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { buildAst } from "./parser";
-import { Executor } from "./executor";
-
-function makeExecutor(inputs: number[] = [], writer = vi.fn()) {
-  let i = 0;
-  const reader = () => inputs[i++] ?? 0;
-  return { executor: new Executor(reader, writer), writer };
-}
+import { Interpreter } from "./interpreter";
 
 function run(code: string, inputs: number[] = []) {
   const writer = vi.fn();
-  const { executor } = makeExecutor(inputs, writer);
-  executor.execute(buildAst(code));
+  let i = 0;
+  const reader = () => inputs[i++] ?? 0;
+  new Interpreter(reader, writer).run(code);
   return writer;
 }
 
@@ -60,11 +55,14 @@ describe("Executor", () => {
   });
 
   it("read/write I/O", () => {
-    const writer = run(`
+    const writer = run(
+      `
       int a;
       a = read();
       write(a + 1);
-    `, [42]);
+    `,
+      [42],
+    );
     expect(writer).toHaveBeenCalledWith(43);
   });
 
@@ -78,22 +76,32 @@ describe("Executor", () => {
   });
 
   it("오류: 같은 스코프에서 변수 재선언", () => {
-    expect(() => run(`
+    const { errors } = buildAst(`
       int a;
       int a;
-    `)).toThrow();
+    `);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.kind).toBe("redeclared-variable");
+    expect(errors[0]!.name).toBe("a");
+    expect(errors[0]!.message).toBe("변수 'a'는 이미 선언되었습니다");
   });
 
   it("오류: 미선언 변수 사용", () => {
-    expect(() => run(`
+    const { errors } = buildAst(`
       a = 1;
-    `)).toThrow();
+    `);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]!.kind).toBe("undeclared-variable");
+    expect(errors[0]!.name).toBe("a");
+    expect(errors[0]!.message).toBe("변수 'a'는 선언되지 않았습니다");
   });
 
   it("오류: 0으로 나누기", () => {
-    expect(() => run(`
+    expect(() =>
+      run(`
       int a;
       a = 1 / 0;
-    `)).toThrow("0으로 나눌 수 없습니다");
+    `),
+    ).toThrow("0으로 나눌 수 없습니다");
   });
 });

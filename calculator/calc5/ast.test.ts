@@ -15,7 +15,9 @@ describe("printAst", () => {
   };
 
   it("단순 프로그램 트리 출력", () => {
-    printAst(buildAst("x = 5 * 3 + a * (5 - 9 / 3);"));
+    const { program } = buildAst("x = 5 * 3 + a * (5 - 9 / 3);");
+
+    printAst(program);
     const lines = getLines();
     expect(lines[0]).toBe("Program");
     expect(lines.some((l) => l.includes("AssignStmt"))).toBe(true);
@@ -25,7 +27,7 @@ describe("printAst", () => {
   });
 
   it("복수 선언(int a, b;)은 각각 별도 DeclareStmt로 분리된다", () => {
-    const program = buildAst("int a, b;");
+    const { program } = buildAst("int a, b;");
     printAst(program);
     const lines = getLines();
     expect(lines.filter((l) => l.includes("DeclareStmt")).length).toBe(2);
@@ -53,7 +55,10 @@ describe("printAst", () => {
       }
       b = 0;
     `;
-    printAst(buildAst(code));
+
+    const { program } = buildAst(code);
+
+    printAst(program);
     const lines = getLines();
 
     expect(lines[0]).toBe("Program");
