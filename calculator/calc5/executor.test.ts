@@ -97,6 +97,17 @@ describe("Executor", () => {
     expect(errors[0]!.message).toBe("변수 'a'는 선언되지 않았습니다");
   });
 
+  it("연쇄 에러 — 미선언 변수가 여러 위치에서 참조되면 위치마다 에러가 발생한다", () => {
+    const { errors } = buildAst(`
+      a = 1;
+      b = a + 1;
+    `);
+    // a 미선언(할당), b 미선언(할당), a 미선언(표현식) — 근본 원인은 2개지만 에러는 3개
+    expect(errors).toHaveLength(3);
+    expect(errors.filter((e) => e.name === "a")).toHaveLength(2);
+    expect(errors.filter((e) => e.name === "b")).toHaveLength(1);
+  });
+
   it("오류: 0으로 나누기", () => {
     expect(() =>
       run(`
@@ -104,5 +115,41 @@ describe("Executor", () => {
       a = 1 / 0;
     `),
     ).toThrow("0으로 나눌 수 없습니다");
+  });
+});
+
+describe("Interpreter — 에러 시 실행 차단", () => {
+  it("재선언 에러 → 콘솔 출력 후 write 호출 안 함", () => {
+    const consoleSpy = vi.spyOn(console, "error");
+    const writer = vi.fn();
+    const interpreter = new Interpreter(() => 0, writer);
+
+    const errors = interpreter.run(`
+      int a;
+      int a;
+      write(a);
+    `);
+
+    expect(errors).toHaveLength(1);
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringMatching(/error:.*이미 선언/));
+    expect(writer).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
+
+  it("미선언 변수 에러 → 콘솔 출력 후 write 호출 안 함", () => {
+    const consoleSpy = vi.spyOn(console, "error");
+    const writer = vi.fn();
+    const interpreter = new Interpreter(() => 0, writer);
+
+    const errors = interpreter.run(`
+      a = 1;
+      write(a);
+    `);
+
+    expect(errors).toHaveLength(2);
+    expect(consoleSpy).toHaveBeenCalledTimes(2);
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringMatching(/error:.*선언되지 않았습니다/));
+    expect(writer).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
   });
 });
