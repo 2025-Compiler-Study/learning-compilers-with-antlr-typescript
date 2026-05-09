@@ -33,8 +33,17 @@ import {
   BinaryExpr,
   CallExpr,
 } from "./ast";
+import { SymbolTableStack } from "../calc4/symbol-table";
+import { SemanticError } from "./errors/semantic-error";
 
 export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
+  private readonly symbolTable: SymbolTableStack = new SymbolTableStack();
+  private readonly errors: SemanticError[] = [];
+
+  getErrors(): SemanticError[] {
+    return [...this.errors];
+  }
+
   private getSpan(ctx: ParserRuleContext) {
     return {
       startLine: ctx.start?.line ?? 0,
@@ -52,6 +61,7 @@ export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
   }
 
   visitProgram = (ctx: ProgramContext): Program => {
+    //TODO - 최종 return이 AST가 아닌 errors가 되어야하나?
     return new Program(this.visitStmts(ctx.stmt()), this.getSpan(ctx));
   };
 
@@ -65,20 +75,51 @@ export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
         endLine: v.symbol.line,
         endColumn: v.symbol.column + varName.length,
       };
+      try {
+        this.symbolTable.declareVariable(varName);
+      } catch (e) {
+        this.errors.push(new SemanticError("redeclared-variable", varName, varSpan, (e as Error).message));
+      }
       return new DeclareStmt([new VariableDecl("int", varName, varSpan)], stmtSpan);
     });
   };
 
   visitExprAssign = (ctx: ExprAssignContext): AssignStmt => {
     const span = this.getSpan(ctx);
-    const target = new IdentifierExpr(ctx.VAR().getText(), span);
+    const varName = ctx.VAR().getText();
+    const varToken = ctx.VAR().symbol;
+    const varSpan = {
+      startLine: varToken.line,
+      startColumn: varToken.column,
+      endLine: varToken.line,
+      endColumn: varToken.column + varName.length,
+    };
+    try {
+      this.symbolTable.getVariable(varName);
+    } catch (e) {
+      this.errors.push(new SemanticError("undeclared-variable", varName, varSpan, (e as Error).message));
+    }
+    const target = new IdentifierExpr(varName, varSpan);
     const value = this.visit(ctx.expr()) as Expr;
     return new AssignStmt(target, value, span);
   };
 
   visitReadAssign = (ctx: ReadAssignContext): AssignStmt => {
     const span = this.getSpan(ctx);
-    const target = new IdentifierExpr(ctx.VAR().getText(), span);
+    const varName = ctx.VAR().getText();
+    const varToken = ctx.VAR().symbol;
+    const varSpan = {
+      startLine: varToken.line,
+      startColumn: varToken.column,
+      endLine: varToken.line,
+      endColumn: varToken.column + varName.length,
+    };
+    try {
+      this.symbolTable.getVariable(varName);
+    } catch (e) {
+      this.errors.push(new SemanticError("undeclared-variable", varName, varSpan, (e as Error).message));
+    }
+    const target = new IdentifierExpr(varName, varSpan);
     const value = new CallExpr("read", undefined, span);
     return new AssignStmt(target, value, span);
   };
@@ -102,7 +143,10 @@ export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
   };
 
   visitBlock = (ctx: BlockContext): BlockStmt => {
-    return new BlockStmt(this.visitStmts(ctx.stmt()), this.getSpan(ctx));
+    this.symbolTable.enterScope();
+    const stmts = this.visitStmts(ctx.stmt());
+    this.symbolTable.exitScope();
+    return new BlockStmt(stmts, this.getSpan(ctx));
   };
 
   visitInt = (ctx: IntContext): IntLiteralExpr => {
@@ -111,7 +155,14 @@ export class AstBuilder extends Calc5Visitor<AstNode | AstNode[]> {
   };
 
   visitVar = (ctx: VarContext): IdentifierExpr => {
-    return new IdentifierExpr(ctx.VAR().getText(), this.getSpan(ctx));
+    const name = ctx.VAR().getText();
+    const span = this.getSpan(ctx);
+    try {
+      this.symbolTable.getVariable(name);
+    } catch (e) {
+      this.errors.push(new SemanticError("undeclared-variable", name, span, (e as Error).message));
+    }
+    return new IdentifierExpr(name, span);
   };
 
   visitParens = (ctx: ParensContext): Expr => {
