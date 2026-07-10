@@ -8,15 +8,14 @@ import {
   ReturnContext,
   IfElseContext,
   StmtBlockContext,
-  ExprContext,
   FuncCallContext,
-  ParamListContext,
-  ArgListContext,
   IntContext,
   VarContext,
   ParensContext,
   MulDivContext,
   AddSubContext,
+  ParamListContext,
+  ArgListContext,
   CondContext,
   BlockContext,
   StmtContext,
@@ -24,19 +23,23 @@ import {
 import { Calc6Visitor } from "../generated-calc6/Calc6Visitor";
 import {
   AstNode,
+  TypeName,
   Program,
   Stmt,
   Expr,
   BlockStmt,
   VariableDecl,
+  Param,
   DeclareStmt,
   AssignStmt,
   ExprStmt,
   IfStmt,
+  ReturnStmt,
   IntLiteralExpr,
   IdentifierExpr,
   BinaryExpr,
   CallExpr,
+  FuncDef,
 } from "./ast";
 import { SymbolTableStack } from "../calc4/symbol-table";
 import { SemanticError, SemanticErrorKind } from "./errors/semantic-error";
@@ -58,6 +61,10 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     };
   }
 
+  private visitFuncDefs(funcDefs: FuncDefContext[]): FuncDef[] {
+    return funcDefs.map((fd) => this.visit(fd) as FuncDef);
+  }
+
   private visitStmts(stmts: StmtContext[]): Stmt[] {
     return stmts.flatMap((s) => {
       const result = this.visit(s);
@@ -66,7 +73,7 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
   }
 
   visitProgram = (ctx: ProgramContext): Program => {
-    return new Program(this.visitStmts(ctx.stmt()), this.getSpan(ctx));
+    return new Program(this.visitFuncDefs(ctx.funcDef()), this.getSpan(ctx));
   };
 
   visitDeclare = (ctx: DeclareContext): DeclareStmt[] => {
@@ -86,7 +93,7 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
           new SemanticError(SemanticErrorKind.RedeclaredVariable, varName, varSpan, (e as Error).message),
         );
       }
-      return new DeclareStmt([new VariableDecl("int", varName, varSpan)], stmtSpan);
+      return new DeclareStmt([new VariableDecl(TypeName.Int, varName, varSpan)], stmtSpan);
     });
   };
 
@@ -110,31 +117,66 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     return new AssignStmt(target, value, span);
   };
 
-  visitReadAssign = (ctx: ReadAssignContext): AssignStmt => {
-    const span = this.getSpan(ctx);
-    const varName = ctx.IDENT().getText();
-    const varToken = ctx.IDENT().symbol;
-    const varSpan = {
-      startLine: varToken.line,
-      startColumn: varToken.column,
-      endLine: varToken.line,
-      endColumn: varToken.column + varName.length,
-    };
-    try {
-      this.symbolTable.getVariable(varName);
-    } catch (e) {
-      this.errors.push(new SemanticError(SemanticErrorKind.UndeclaredVariable, varName, varSpan, (e as Error).message));
-    }
-    const target = new IdentifierExpr(varName, varSpan);
-    const value = new CallExpr("read", undefined, span);
-    return new AssignStmt(target, value, span);
+  visitExprStmt = (ctx: ExprStmtContext): ExprStmt => {
+    const expr = this.visit(ctx.expr()) as Expr;
+    return new ExprStmt(expr, this.getSpan(ctx));
   };
 
-  visitWrite = (ctx: WriteContext): ExprStmt => {
+  visitReturn = (ctx: ReturnContext): ReturnStmt => {
+    const exprCtx = ctx.expr();
+    const value = exprCtx ? (this.visit(exprCtx) as Expr) : undefined;
+    return new ReturnStmt(value, this.getSpan(ctx));
+  };
+
+  visitFuncDef = (ctx: FuncDefContext): FuncDef => {
     const span = this.getSpan(ctx);
-    const arg = this.visit(ctx.expr()) as Expr;
-    const expr = new CallExpr("write", [arg], span);
-    return new ExprStmt(expr, span);
+    const name = ctx.IDENT().getText();
+    const returnType: TypeName = ctx.getChild(1)?.getText() === TypeName.Int ? TypeName.Int : TypeName.Void;
+
+    this.symbolTable.enterScope();
+
+    const paramListCtx = ctx.paramList();
+    const params: Param[] = paramListCtx ? (this.visit(paramListCtx) as Param[]) : [];
+
+    const blockCtx = ctx.block();
+    const bodyStmts = this.visitStmts(blockCtx.stmt());
+    const body = new BlockStmt(bodyStmts, this.getSpan(blockCtx));
+
+    this.symbolTable.exitScope();
+
+    return new FuncDef(name, params, returnType, body, span);
+  };
+
+  visitParamList = (ctx: ParamListContext): Param[] => {
+    return ctx.IDENT().map((ident) => {
+      const paramName = ident.getText();
+      const paramSpan = {
+        startLine: ident.symbol.line,
+        startColumn: ident.symbol.column,
+        endLine: ident.symbol.line,
+        endColumn: ident.symbol.column + paramName.length,
+      };
+      try {
+        this.symbolTable.declareVariable(paramName);
+      } catch (e) {
+        this.errors.push(
+          new SemanticError(SemanticErrorKind.RedeclaredVariable, paramName, paramSpan, (e as Error).message),
+        );
+      }
+      return new Param(TypeName.Int, paramName, paramSpan);
+    });
+  };
+
+  visitArgList = (ctx: ArgListContext): Expr[] => {
+    return ctx.expr().map((e) => this.visit(e) as Expr);
+  };
+
+  visitFuncCall = (ctx: FuncCallContext): CallExpr => {
+    const span = this.getSpan(ctx);
+    const callee = ctx.IDENT().getText();
+    const argListCtx = ctx.argList();
+    const args = argListCtx ? (this.visit(argListCtx) as Expr[]) : undefined;
+    return new CallExpr(callee, args, span);
   };
 
   visitIfElse = (ctx: IfElseContext): IfStmt => {
@@ -160,7 +202,7 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     return new IntLiteralExpr(value, this.getSpan(ctx));
   };
 
-  visitIdent = (ctx: VarContext): IdentifierExpr => {
+  visitVar = (ctx: VarContext): IdentifierExpr => {
     const name = ctx.IDENT().getText();
     const span = this.getSpan(ctx);
     try {

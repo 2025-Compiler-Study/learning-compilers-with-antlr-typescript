@@ -1,6 +1,6 @@
 import {
-  AstNode, Program, BlockStmt, DeclareStmt, AssignStmt,
-  ExprStmt, IfStmt, BinaryExpr, CallExpr, IntLiteralExpr, IdentifierExpr,
+  AstNode, Program, FuncDef, Param, BlockStmt, DeclareStmt, VariableDecl, AssignStmt,
+  ExprStmt, IfStmt, ReturnStmt, BinaryExpr, CallExpr, IntLiteralExpr, IdentifierExpr,
 } from "./ast";
 
 function collectLines(node: AstNode, prefix: string, isLast: boolean, out: string[]): void {
@@ -12,17 +12,25 @@ function collectLines(node: AstNode, prefix: string, isLast: boolean, out: strin
 
   if (node instanceof Program) {
     push("Program"); recurse(node.statements);
+  } else if (node instanceof FuncDef) {
+    push(`FuncDef ${node.returnType} ${node.name}`); recurse([...node.params, node.body]);
+  } else if (node instanceof Param) {
+    push(`Param ${node.typeName} ${node.name}`);
   } else if (node instanceof BlockStmt) {
     push("BlockStmt"); recurse(node.statements);
   } else if (node instanceof DeclareStmt) {
-    push(`DeclareStmt [${node.declarations.map((d) => `${d.typeName} ${d.name}`).join(", ")}]`);
+    push("DeclareStmt"); recurse(node.declarations);
+  } else if (node instanceof VariableDecl) {
+    push(`VariableDecl ${node.typeName} ${node.name}`);
   } else if (node instanceof AssignStmt) {
-    push(`AssignStmt  ${node.target.name} =`); recurse([node.value]);
+    push("AssignStmt"); recurse([node.target, node.value]);
   } else if (node instanceof ExprStmt) {
     push("ExprStmt"); recurse([node.expr]);
   } else if (node instanceof IfStmt) {
     push("IfStmt");
     recurse([node.condition, node.thenBranch, ...(node.elseBranch ? [node.elseBranch] : [])]);
+  } else if (node instanceof ReturnStmt) {
+    push("ReturnStmt"); recurse(node.value ? [node.value] : []);
   } else if (node instanceof BinaryExpr) {
     push(`BinaryExpr(${node.op})`); recurse([node.left, node.right]);
   } else if (node instanceof CallExpr) {

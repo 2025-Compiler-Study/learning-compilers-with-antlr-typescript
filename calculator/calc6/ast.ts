@@ -5,6 +5,13 @@ export type SourceSpan = {
   endColumn: number;
 };
 
+export const TypeName = {
+  Int: "int",
+  Void: "void",
+} as const;
+
+export type TypeName = (typeof TypeName)[keyof typeof TypeName];
+
 export abstract class AstNode {
   constructor(public readonly span?: SourceSpan) {}
 }
@@ -29,15 +36,19 @@ export class BlockStmt extends Stmt {
   }
 }
 
-export class VariableDecl extends AstNode {
+export abstract class Decl extends AstNode {
   constructor(
-    public readonly typeName: "int",
+    public readonly typeName: typeof TypeName.Int,
     public readonly name: string,
     span?: SourceSpan,
   ) {
     super(span);
   }
 }
+
+export class VariableDecl extends Decl {}
+
+export class Param extends Decl {}
 
 export class DeclareStmt extends Stmt {
   constructor(
@@ -72,6 +83,15 @@ export class IfStmt extends Stmt {
     public readonly condition: Expr,
     public readonly thenBranch: Stmt,
     public readonly elseBranch?: Stmt,
+    span?: SourceSpan,
+  ) {
+    super(span);
+  }
+}
+
+export class ReturnStmt extends Stmt {
+  constructor(
+    public readonly value?: Expr,
     span?: SourceSpan,
   ) {
     super(span);
@@ -115,6 +135,18 @@ export class CallExpr extends Expr {
   constructor(
     public readonly callee: string,
     public readonly args?: Expr[],
+    span?: SourceSpan,
+  ) {
+    super(span);
+  }
+}
+
+export class FuncDef extends AstNode {
+  constructor(
+    public readonly name: string,
+    public readonly params: Param[],
+    public readonly returnType: TypeName,
+    public readonly body: BlockStmt,
     span?: SourceSpan,
   ) {
     super(span);
