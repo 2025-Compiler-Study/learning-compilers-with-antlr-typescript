@@ -1,4 +1,4 @@
-import { SymbolTableStack } from "../calc4/symbol-table";
+import { EnvironmentStack } from "./environment";
 import {
   AssignStmt,
   BinaryExpr,
@@ -7,15 +7,22 @@ import {
   DeclareStmt,
   Expr,
   ExprStmt,
+  FuncDef,
   IdentifierExpr,
   IfStmt,
   IntLiteralExpr,
   Program,
+  ReturnStmt,
   Stmt,
 } from "./ast";
 
+class ReturnSignal {
+  constructor(public readonly value: number) {}
+}
+
 export class Executor {
-  private readonly symbolTable: SymbolTableStack = new SymbolTableStack();
+  private functionTable = new Map<string, FuncDef>();
+  private readonly callStack: EnvironmentStack[] = [];
 
   constructor(
     private readonly reader: () => number,
@@ -23,8 +30,32 @@ export class Executor {
   ) {}
 
   execute(program: Program): void {
-    for (const stmt of program.statements) {
-      this.executeStmt(stmt);
+    this.functionTable = new Map(program.functions.map((f) => [f.name, f]));
+    const main = this.functionTable.get("main")!;
+    this.callFunction(main, []);
+  }
+
+  private get currentFrame(): EnvironmentStack {
+    return this.callStack[this.callStack.length - 1]!;
+  }
+
+  private callFunction(func: FuncDef, args: number[]): number {
+    const frame = new EnvironmentStack();
+    this.callStack.push(frame);
+    try {
+      func.params.forEach((param, i) => {
+        frame.declareVariable(param.name);
+        frame.setVariable(param.name, args[i] ?? 0);
+      });
+      for (const stmt of func.body.statements) {
+        this.executeStmt(stmt);
+      }
+      return 0;
+    } catch (e) {
+      if (e instanceof ReturnSignal) return e.value;
+      throw e;
+    } finally {
+      this.callStack.pop();
     }
   }
 
@@ -34,26 +65,27 @@ export class Executor {
     if (stmt instanceof BlockStmt) return this.executeBlockStmt(stmt);
     if (stmt instanceof ExprStmt) return this.executeExprStmt(stmt);
     if (stmt instanceof IfStmt) return this.executeIfStmt(stmt);
+    if (stmt instanceof ReturnStmt) return this.executeReturnStmt(stmt);
     throw new Error(`알 수 없는 구문 타입입니다`);
   }
 
   private executeDeclareStmt(stmt: DeclareStmt): void {
     for (const decl of stmt.declarations) {
-      this.symbolTable.declareVariable(decl.name);
+      this.currentFrame.declareVariable(decl.name);
     }
   }
 
   private executeAssignStmt(stmt: AssignStmt): void {
     const value = this.evaluateExpr(stmt.value);
-    this.symbolTable.setVariable(stmt.target.name, value);
+    this.currentFrame.setVariable(stmt.target.name, value);
   }
 
   private executeBlockStmt(stmt: BlockStmt): void {
-    this.symbolTable.enterScope();
+    this.currentFrame.enterScope();
     for (const s of stmt.statements) {
       this.executeStmt(s);
     }
-    this.symbolTable.exitScope();
+    this.currentFrame.exitScope();
   }
 
   private executeExprStmt(stmt: ExprStmt): void {
@@ -69,6 +101,11 @@ export class Executor {
     }
   }
 
+  private executeReturnStmt(stmt: ReturnStmt): never {
+    const value = stmt.value !== undefined ? this.evaluateExpr(stmt.value) : 0;
+    throw new ReturnSignal(value);
+  }
+
   private evaluateExpr(expr: Expr): number {
     if (expr instanceof IntLiteralExpr) return this.evaluateIntLiteralExpr(expr);
     if (expr instanceof IdentifierExpr) return this.evaluateIdentifierExpr(expr);
@@ -82,7 +119,7 @@ export class Executor {
   }
 
   private evaluateIdentifierExpr(expr: IdentifierExpr): number {
-    return this.symbolTable.getVariable(expr.name);
+    return this.currentFrame.getVariable(expr.name);
   }
 
   private evaluateBinaryExpr(expr: BinaryExpr): number {
@@ -125,6 +162,11 @@ export class Executor {
       this.writer(value);
       return value;
     }
-    throw new Error(`알 수 없는 함수입니다: '${expr.callee}'`);
+    const func = this.functionTable.get(expr.callee);
+    if (func === undefined) {
+      throw new Error(`알 수 없는 함수입니다: '${expr.callee}'`);
+    }
+    const args = (expr.args ?? []).map((arg) => this.evaluateExpr(arg));
+    return this.callFunction(func, args);
   }
 }
