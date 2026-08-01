@@ -18,7 +18,7 @@ export abstract class AstNode {
 
 export class Program extends AstNode {
   constructor(
-    public readonly statements: Stmt[],
+    public readonly functions: FuncDef[],
     span?: SourceSpan,
   ) {
     super(span);

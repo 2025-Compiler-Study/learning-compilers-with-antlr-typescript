@@ -43,7 +43,7 @@ describe("printAst", () => {
     expect(lines.some((l) => l.includes("VariableDecl int a"))).toBe(true);
     expect(lines.some((l) => l.includes("VariableDecl int b"))).toBe(true);
 
-    const funcDef = program.statements[0] as unknown as FuncDef;
+    const funcDef = program.functions[0] as unknown as FuncDef;
     const stmts = funcDef.body.statements as DeclareStmt[];
     // DeclareStmt span — "int a, b;" 전체 (2번째 줄, 2칸 들여쓰기)
     expect(stmts[0]!.span).toEqual({ startLine: 2, startColumn: 2, endLine: 2, endColumn: 11 });
