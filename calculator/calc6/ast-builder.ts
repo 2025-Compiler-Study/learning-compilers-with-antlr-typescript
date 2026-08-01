@@ -41,8 +41,10 @@ import {
   CallExpr,
   FuncDef,
 } from "./ast";
-import { SymbolTableStack } from "../calc4/symbol-table";
+import { SymbolTableStack } from "./symbol-table";
 import { SemanticError, SemanticErrorKind } from "./errors/semantic-error";
+
+const ENTRY_POINT_NAME = "main";
 
 export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
   private readonly symbolTable: SymbolTableStack = new SymbolTableStack();
@@ -73,7 +75,20 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
   }
 
   visitProgram = (ctx: ProgramContext): Program => {
-    return new Program(this.visitFuncDefs(ctx.funcDef()), this.getSpan(ctx));
+    this.symbolTable.enterScope();
+    const functions = this.visitFuncDefs(ctx.funcDef());
+    if (!functions.some((f) => f.name === ENTRY_POINT_NAME)) {
+      this.errors.push(
+        new SemanticError(
+          SemanticErrorKind.MissingMain,
+          ENTRY_POINT_NAME,
+          this.getSpan(ctx),
+          `진입점 함수 '${ENTRY_POINT_NAME}'이 없습니다`,
+        ),
+      );
+    }
+    this.symbolTable.exitScope();
+    return new Program(functions, this.getSpan(ctx));
   };
 
   visitDeclare = (ctx: DeclareContext): DeclareStmt[] => {
@@ -86,12 +101,23 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
         endLine: v.symbol.line,
         endColumn: v.symbol.column + varName.length,
       };
-      try {
-        this.symbolTable.declareVariable(varName);
-      } catch (e) {
+      if (varName === ENTRY_POINT_NAME) {
         this.errors.push(
-          new SemanticError(SemanticErrorKind.RedeclaredVariable, varName, varSpan, (e as Error).message),
+          new SemanticError(
+            SemanticErrorKind.ReservedIdentifier,
+            varName,
+            varSpan,
+            `'${ENTRY_POINT_NAME}'은 예약된 이름이라 변수로 사용할 수 없습니다`,
+          ),
         );
+      } else {
+        try {
+          this.symbolTable.declare(varName);
+        } catch (e) {
+          this.errors.push(
+            new SemanticError(SemanticErrorKind.RedeclaredIdentifier, varName, varSpan, (e as Error).message),
+          );
+        }
       }
       return new DeclareStmt([new VariableDecl(TypeName.Int, varName, varSpan)], stmtSpan);
     });
@@ -108,7 +134,7 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
       endColumn: varToken.column + varName.length,
     };
     try {
-      this.symbolTable.getVariable(varName);
+      this.symbolTable.assertDeclared(varName);
     } catch (e) {
       this.errors.push(new SemanticError(SemanticErrorKind.UndeclaredVariable, varName, varSpan, (e as Error).message));
     }
@@ -133,6 +159,12 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     const name = ctx.IDENT().getText();
     const returnType: TypeName = ctx.getChild(1)?.getText() === TypeName.Int ? TypeName.Int : TypeName.Void;
 
+    try {
+      this.symbolTable.declare(name);
+    } catch (e) {
+      this.errors.push(new SemanticError(SemanticErrorKind.RedeclaredIdentifier, name, span, (e as Error).message));
+    }
+
     this.symbolTable.enterScope();
 
     const paramListCtx = ctx.paramList();
@@ -156,12 +188,23 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
         endLine: ident.symbol.line,
         endColumn: ident.symbol.column + paramName.length,
       };
-      try {
-        this.symbolTable.declareVariable(paramName);
-      } catch (e) {
+      if (paramName === ENTRY_POINT_NAME) {
         this.errors.push(
-          new SemanticError(SemanticErrorKind.RedeclaredVariable, paramName, paramSpan, (e as Error).message),
+          new SemanticError(
+            SemanticErrorKind.ReservedIdentifier,
+            paramName,
+            paramSpan,
+            `'${ENTRY_POINT_NAME}'은 예약된 이름이라 매개변수로 사용할 수 없습니다`,
+          ),
         );
+      } else {
+        try {
+          this.symbolTable.declare(paramName);
+        } catch (e) {
+          this.errors.push(
+            new SemanticError(SemanticErrorKind.RedeclaredIdentifier, paramName, paramSpan, (e as Error).message),
+          );
+        }
       }
       return new Param(TypeName.Int, paramName, paramSpan);
     });
@@ -174,6 +217,16 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
   visitFuncCall = (ctx: FuncCallContext): CallExpr => {
     const span = this.getSpan(ctx);
     const callee = ctx.IDENT().getText();
+    if (callee === ENTRY_POINT_NAME) {
+      this.errors.push(
+        new SemanticError(
+          SemanticErrorKind.InvalidMainCall,
+          callee,
+          span,
+          `진입점 함수 '${ENTRY_POINT_NAME}'은 일반 호출식으로 사용할 수 없습니다`,
+        ),
+      );
+    }
     const argListCtx = ctx.argList();
     const args = argListCtx ? (this.visit(argListCtx) as Expr[]) : undefined;
     return new CallExpr(callee, args, span);
@@ -206,7 +259,7 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     const name = ctx.IDENT().getText();
     const span = this.getSpan(ctx);
     try {
-      this.symbolTable.getVariable(name);
+      this.symbolTable.assertDeclared(name);
     } catch (e) {
       this.errors.push(new SemanticError(SemanticErrorKind.UndeclaredVariable, name, span, (e as Error).message));
     }

@@ -3,7 +3,10 @@ import { CompilerError } from "./compiler-error";
 
 export const SemanticErrorKind = {
   UndeclaredVariable: "undeclared-variable",
-  RedeclaredVariable: "redeclared-variable",
+  RedeclaredIdentifier: "redeclared-identifier",
+  MissingMain: "missing-main",
+  InvalidMainCall: "invalid-main-call",
+  ReservedIdentifier: "reserved-identifier",
 } as const;
 
 export type SemanticErrorKind = (typeof SemanticErrorKind)[keyof typeof SemanticErrorKind];
