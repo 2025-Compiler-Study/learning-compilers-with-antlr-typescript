@@ -15,23 +15,39 @@ import {
   ReturnStmt,
   Stmt,
 } from "./ast";
+import { RESERVED_NAMES } from "./reserved-names";
 
 class ReturnSignal {
   constructor(public readonly value: number) {}
 }
 
+type BuiltinFunction = (args: number[]) => number;
+
 export class Executor {
   private functionTable = new Map<string, FuncDef>();
+  private readonly builtins: Map<string, BuiltinFunction>;
   private readonly callStack: EnvironmentStack[] = [];
 
   constructor(
     private readonly reader: () => number,
     private readonly writer: (value: number) => void,
-  ) {}
+  ) {
+    this.builtins = new Map<string, BuiltinFunction>([
+      [RESERVED_NAMES.READ, () => this.reader()],
+      [
+        RESERVED_NAMES.WRITE,
+        (args) => {
+          const value = args[0] ?? 0;
+          this.writer(value);
+          return value;
+        },
+      ],
+    ]);
+  }
 
   execute(program: Program): void {
     this.functionTable = new Map(program.functions.map((f) => [f.name, f]));
-    const main = this.functionTable.get("main")!;
+    const main = this.functionTable.get(RESERVED_NAMES.ENTRY_POINT)!;
     this.callFunction(main, []);
   }
 
@@ -154,19 +170,17 @@ export class Executor {
   }
 
   private evaluateCallExpr(expr: CallExpr): number {
-    if (expr.callee === "read") {
-      return this.reader();
+    const args = (expr.args ?? []).map((arg) => this.evaluateExpr(arg));
+
+    const builtin = this.builtins.get(expr.callee);
+    if (builtin) {
+      return builtin(args);
     }
-    if (expr.callee === "write") {
-      const value = this.evaluateExpr(expr.args![0]!);
-      this.writer(value);
-      return value;
-    }
+
     const func = this.functionTable.get(expr.callee);
     if (func === undefined) {
       throw new Error(`알 수 없는 함수입니다: '${expr.callee}'`);
     }
-    const args = (expr.args ?? []).map((arg) => this.evaluateExpr(arg));
     return this.callFunction(func, args);
   }
 }

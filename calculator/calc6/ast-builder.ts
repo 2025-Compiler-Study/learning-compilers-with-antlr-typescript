@@ -1,4 +1,4 @@
-import { ParserRuleContext } from "antlr4ng";
+import { ParserRuleContext, Token } from "antlr4ng";
 import {
   ProgramContext,
   FuncDefContext,
@@ -40,11 +40,11 @@ import {
   BinaryExpr,
   CallExpr,
   FuncDef,
+  SourceSpan,
 } from "./ast";
 import { SymbolTableStack } from "./symbol-table";
 import { SemanticError, SemanticErrorKind } from "./errors/semantic-error";
-
-const ENTRY_POINT_NAME = "main";
+import { RESERVED_NAMES, RESERVED_IDENTIFIERS, RESERVED_IDENTIFIERS_EXCEPT_ENTRY_POINT } from "./reserved-names";
 
 export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
   private readonly symbolTable: SymbolTableStack = new SymbolTableStack();
@@ -52,6 +52,14 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
 
   getErrors(): SemanticError[] {
     return [...this.errors];
+  }
+
+  private pushError(kind: SemanticErrorKind, name: string, span: SourceSpan, message: string): void {
+    this.errors.push(new SemanticError(kind, name, span, message));
+  }
+
+  private checkReservedNames(name: string, reservedNames: ReadonlySet<string>): boolean {
+    return reservedNames.has(name);
   }
 
   private getSpan(ctx: ParserRuleContext) {
@@ -63,8 +71,13 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     };
   }
 
-  private visitFuncDefs(funcDefs: FuncDefContext[]): FuncDef[] {
-    return funcDefs.map((fd) => this.visit(fd) as FuncDef);
+  private getIdentSpan(token: Token, name: string): SourceSpan {
+    return {
+      startLine: token.line,
+      startColumn: token.column,
+      endLine: token.line,
+      endColumn: token.column + name.length,
+    };
   }
 
   private visitStmts(stmts: StmtContext[]): Stmt[] {
@@ -76,14 +89,14 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
 
   visitProgram = (ctx: ProgramContext): Program => {
     this.symbolTable.enterScope();
-    const functions = this.visitFuncDefs(ctx.funcDef());
-    if (!functions.some((f) => f.name === ENTRY_POINT_NAME)) {
+    const functions = ctx.funcDef().map((fd) => this.visit(fd) as FuncDef);
+    if (!functions.some((f) => f.name === RESERVED_NAMES.ENTRY_POINT)) {
       this.errors.push(
         new SemanticError(
           SemanticErrorKind.MissingMain,
-          ENTRY_POINT_NAME,
+          RESERVED_NAMES.ENTRY_POINT,
           this.getSpan(ctx),
-          `진입점 함수 '${ENTRY_POINT_NAME}'이 없습니다`,
+          `진입점 함수 '${RESERVED_NAMES.ENTRY_POINT}'이 없습니다`,
         ),
       );
     }
@@ -95,28 +108,19 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     const stmtSpan = this.getSpan(ctx);
     return ctx.IDENT().map((v) => {
       const varName = v.getText();
-      const varSpan = {
-        startLine: v.symbol.line,
-        startColumn: v.symbol.column,
-        endLine: v.symbol.line,
-        endColumn: v.symbol.column + varName.length,
-      };
-      if (varName === ENTRY_POINT_NAME) {
-        this.errors.push(
-          new SemanticError(
-            SemanticErrorKind.ReservedIdentifier,
-            varName,
-            varSpan,
-            `'${ENTRY_POINT_NAME}'은 예약된 이름이라 변수로 사용할 수 없습니다`,
-          ),
+      const varSpan = this.getIdentSpan(v.symbol, varName);
+      if (this.checkReservedNames(varName, RESERVED_IDENTIFIERS)) {
+        this.pushError(
+          SemanticErrorKind.ReservedIdentifier,
+          varName,
+          varSpan,
+          `'${varName}'은 예약된 이름이라 변수로 사용할 수 없습니다`,
         );
       } else {
         try {
           this.symbolTable.declare(varName);
         } catch (e) {
-          this.errors.push(
-            new SemanticError(SemanticErrorKind.RedeclaredIdentifier, varName, varSpan, (e as Error).message),
-          );
+          this.pushError(SemanticErrorKind.RedeclaredIdentifier, varName, varSpan, (e as Error).message);
         }
       }
       return new DeclareStmt([new VariableDecl(TypeName.Int, varName, varSpan)], stmtSpan);
@@ -125,18 +129,13 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
 
   visitExprAssign = (ctx: ExprAssignContext): AssignStmt => {
     const span = this.getSpan(ctx);
-    const varName = ctx.IDENT().getText();
-    const varToken = ctx.IDENT().symbol;
-    const varSpan = {
-      startLine: varToken.line,
-      startColumn: varToken.column,
-      endLine: varToken.line,
-      endColumn: varToken.column + varName.length,
-    };
+    const identNode = ctx.IDENT();
+    const varName = identNode.getText();
+    const varSpan = this.getIdentSpan(identNode.symbol, varName);
     try {
       this.symbolTable.assertDeclared(varName);
     } catch (e) {
-      this.errors.push(new SemanticError(SemanticErrorKind.UndeclaredVariable, varName, varSpan, (e as Error).message));
+      this.pushError(SemanticErrorKind.UndeclaredVariable, varName, varSpan, (e as Error).message);
     }
     const target = new IdentifierExpr(varName, varSpan);
     const value = this.visit(ctx.expr()) as Expr;
@@ -159,10 +158,19 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     const name = ctx.IDENT().getText();
     const returnType: TypeName = ctx.getChild(1)?.getText() === TypeName.Int ? TypeName.Int : TypeName.Void;
 
-    try {
-      this.symbolTable.declare(name);
-    } catch (e) {
-      this.errors.push(new SemanticError(SemanticErrorKind.RedeclaredIdentifier, name, span, (e as Error).message));
+    if (this.checkReservedNames(name, RESERVED_IDENTIFIERS_EXCEPT_ENTRY_POINT)) {
+      this.pushError(
+        SemanticErrorKind.ReservedIdentifier,
+        name,
+        span,
+        `'${name}'은 예약된 이름이라 함수로 사용할 수 없습니다`,
+      );
+    } else {
+      try {
+        this.symbolTable.declare(name);
+      } catch (e) {
+        this.pushError(SemanticErrorKind.RedeclaredIdentifier, name, span, (e as Error).message);
+      }
     }
 
     this.symbolTable.enterScope();
@@ -182,28 +190,19 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
   visitParamList = (ctx: ParamListContext): Param[] => {
     return ctx.IDENT().map((ident) => {
       const paramName = ident.getText();
-      const paramSpan = {
-        startLine: ident.symbol.line,
-        startColumn: ident.symbol.column,
-        endLine: ident.symbol.line,
-        endColumn: ident.symbol.column + paramName.length,
-      };
-      if (paramName === ENTRY_POINT_NAME) {
-        this.errors.push(
-          new SemanticError(
-            SemanticErrorKind.ReservedIdentifier,
-            paramName,
-            paramSpan,
-            `'${ENTRY_POINT_NAME}'은 예약된 이름이라 매개변수로 사용할 수 없습니다`,
-          ),
+      const paramSpan = this.getIdentSpan(ident.symbol, paramName);
+      if (this.checkReservedNames(paramName, RESERVED_IDENTIFIERS)) {
+        this.pushError(
+          SemanticErrorKind.ReservedIdentifier,
+          paramName,
+          paramSpan,
+          `'${paramName}'은 예약된 이름이라 매개변수로 사용할 수 없습니다`,
         );
       } else {
         try {
           this.symbolTable.declare(paramName);
         } catch (e) {
-          this.errors.push(
-            new SemanticError(SemanticErrorKind.RedeclaredIdentifier, paramName, paramSpan, (e as Error).message),
-          );
+          this.pushError(SemanticErrorKind.RedeclaredIdentifier, paramName, paramSpan, (e as Error).message);
         }
       }
       return new Param(TypeName.Int, paramName, paramSpan);
@@ -217,13 +216,13 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
   visitFuncCall = (ctx: FuncCallContext): CallExpr => {
     const span = this.getSpan(ctx);
     const callee = ctx.IDENT().getText();
-    if (callee === ENTRY_POINT_NAME) {
+    if (callee === RESERVED_NAMES.ENTRY_POINT) {
       this.errors.push(
         new SemanticError(
           SemanticErrorKind.InvalidMainCall,
           callee,
           span,
-          `진입점 함수 '${ENTRY_POINT_NAME}'은 일반 호출식으로 사용할 수 없습니다`,
+          `진입점 함수 '${RESERVED_NAMES.ENTRY_POINT}'은 일반 호출식으로 사용할 수 없습니다`,
         ),
       );
     }
@@ -261,7 +260,7 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     try {
       this.symbolTable.assertDeclared(name);
     } catch (e) {
-      this.errors.push(new SemanticError(SemanticErrorKind.UndeclaredVariable, name, span, (e as Error).message));
+      this.pushError(SemanticErrorKind.UndeclaredVariable, name, span, (e as Error).message);
     }
     return new IdentifierExpr(name, span);
   };
