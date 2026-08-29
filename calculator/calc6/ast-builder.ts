@@ -46,9 +46,15 @@ import { SymbolTableStack } from "./symbol-table";
 import { SemanticError, SemanticErrorKind } from "./errors/semantic-error";
 import { RESERVED_NAMES, RESERVED_IDENTIFIERS, RESERVED_IDENTIFIERS_EXCEPT_ENTRY_POINT } from "./reserved-names";
 
+type FunctionSignature = {
+  params: Map<string, TypeName>;
+  returnType: TypeName;
+};
+
 export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
   private readonly symbolTable: SymbolTableStack = new SymbolTableStack();
   private readonly errors: SemanticError[] = [];
+  private readonly functionSignatures: Map<string, FunctionSignature> = new Map();
 
   getErrors(): SemanticError[] {
     return [...this.errors];
@@ -87,8 +93,28 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     });
   }
 
+  private getReturnType(ctx: FuncDefContext): TypeName {
+    return ctx.getChild(1)?.getText() === TypeName.Int ? TypeName.Int : TypeName.Void;
+  }
+
+  private inferExprType(expr: Expr): TypeName {
+    if (expr instanceof CallExpr) {
+      return this.functionSignatures.get(expr.callee)?.returnType ?? TypeName.Int;
+    }
+    return TypeName.Int;
+  }
+
   visitProgram = (ctx: ProgramContext): Program => {
     this.symbolTable.enterScope();
+
+    ctx.funcDef().forEach((fd) => {
+      const params = new Map<string, TypeName>();
+      fd.paramList()
+        ?.IDENT()
+        .forEach((ident) => params.set(ident.getText(), TypeName.Int));
+      this.functionSignatures.set(fd.IDENT().getText(), { params, returnType: this.getReturnType(fd) });
+    });
+
     const functions = ctx.funcDef().map((fd) => this.visit(fd) as FuncDef);
     if (!functions.some((f) => f.name === RESERVED_NAMES.ENTRY_POINT)) {
       this.errors.push(
@@ -156,7 +182,7 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
   visitFuncDef = (ctx: FuncDefContext): FuncDef => {
     const span = this.getSpan(ctx);
     const name = ctx.IDENT().getText();
-    const returnType: TypeName = ctx.getChild(1)?.getText() === TypeName.Int ? TypeName.Int : TypeName.Void;
+    const returnType: TypeName = this.getReturnType(ctx);
 
     if (this.checkReservedNames(name, RESERVED_IDENTIFIERS_EXCEPT_ENTRY_POINT)) {
       this.pushError(
@@ -228,6 +254,34 @@ export class AstBuilder extends Calc6Visitor<AstNode | AstNode[]> {
     }
     const argListCtx = ctx.argList();
     const args = argListCtx ? (this.visit(argListCtx) as Expr[]) : undefined;
+
+    const signature = this.functionSignatures.get(callee);
+    if (signature) {
+      const paramNames = [...signature.params.keys()];
+      const actualArgsCount = args?.length ?? 0;
+      if (actualArgsCount !== paramNames.length) {
+        this.pushError(
+          SemanticErrorKind.ArgumentCountMismatch,
+          callee,
+          span,
+          `함수 '${callee}'는 매개변수 ${paramNames.length}개가 필요한데 인자 ${actualArgsCount}개가 전달되었습니다`,
+        );
+      } else {
+        paramNames.forEach((paramName, i) => {
+          const paramType = signature.params.get(paramName)!;
+          const argType = this.inferExprType(args![i]!);
+          if (argType !== paramType) {
+            this.pushError(
+              SemanticErrorKind.ArgumentTypeMismatch,
+              callee,
+              span,
+              `함수 '${callee}'의 ${i + 1}번째 인자 타입이 올바르지 않습니다 (매개변수 '${paramName}': '${paramType}' 필요, 전달된 타입: '${argType}')`,
+            );
+          }
+        });
+      }
+    }
+
     return new CallExpr(callee, args, span);
   };
 

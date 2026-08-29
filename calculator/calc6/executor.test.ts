@@ -226,6 +226,70 @@ describe("Executor", () => {
     });
   });
 
+  describe("사용자 정의 함수", () => {
+    it("사용자 정의함수의 계산 결과를 담고 반환한다", () => {
+      const writer = run(`
+      func sum(int a, int b) {
+        int result;
+        result = a + b;
+        return result;
+      }
+      func main() {
+        write(sum(2, 3));
+      }
+    `);
+      expect(writer).toHaveBeenCalledWith(5);
+    });
+
+    it("오류: 인자 개수가 파라미터 개수보다 적으면 ArgumentCountMismatch", () => {
+      const { errors } = buildAst(`
+      func sum(int a, int b) {
+        int result;
+        result = a + b;
+        return result;
+      }
+      func main() {
+        write(sum(2));
+      }
+    `);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]!.kind).toBe(SemanticErrorKind.ArgumentCountMismatch);
+      expect(errors[0]!.name).toBe("sum");
+    });
+
+    it("오류: 인자 개수가 파라미터 개수보다 많으면 ArgumentCountMismatch", () => {
+      const { errors } = buildAst(`
+      func sum(int a, int b) {
+        int result;
+        result = a + b;
+        return result;
+      }
+      func main() {
+        write(sum(2, 3, 4));
+      }
+    `);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]!.kind).toBe(SemanticErrorKind.ArgumentCountMismatch);
+      expect(errors[0]!.name).toBe("sum");
+    });
+
+    it("개수가 다르면 개수 오류만 나고 타입 체크는 하지 않는다", () => {
+      const { errors } = buildAst(`
+      func sideEffect() {
+        write(1);
+      }
+      func sum(int a, int b) {
+        return a + b;
+      }
+      func main() {
+        write(sum(sideEffect()));
+      }
+    `);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]!.kind).toBe(SemanticErrorKind.ArgumentCountMismatch);
+    });
+  });
+
   describe("return", () => {
     it("return을 만나면 그 이후 문장을 실행하지 않는다", () => {
       const writer = run(`

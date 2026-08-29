@@ -220,6 +220,63 @@ A는 순회 지점이 늘어날수록(현재는 2곳뿐이라 적지만) 체크 
 calc6 규모에서는 "예외를 일반 제어흐름에 쓰는 게 스타일상 어색하다"는 비용보다 이 안전성 이득이 크다고 판단.
 `ReturnSignal`은 `executeReturnStmt`에서만 사용함으로 다른 곳에서 신경 쓸 필요가 없게끔 하는게 더 낫다?
 
-## 구현과제 #3 4번 오류를 내는 시점
+## Q5. 함수 호출의 인자 개수/타입이 정의와 다르면 — 어디서, 어떻게 체크하나?
 
-기존처럼 errors에 추가 후 인터프리터가 실행기를 호출하기 전인가?
+### 어디서 체크하나 — AstBuilder
+
+`add(1, 2, 3)`은 `argList` 문법 자체는 완벽히 통과하고, `add`의 선언
+(`paramList` 개수)과 대조해야만 틀렸다는 걸 알 수 있다 — `UndeclaredVariable`/`RedeclaredIdentifier`와
+정확히 같은 카테고리. 반대로 지금 Executor의 `evaluateCallExpr`에 남아있는 "알 수 없는 함수입니다"
+에러는 구조화 안 된 `throw new Error`, uncaught exception으로 튐, 그 호출이 실행되는 분기에 있을 때만
+잡힘 — Q3가 이미 정한 패턴이라 새 체크를 여기 얹지 않기로 함.
+
+**결론**: `SemanticErrorKind`에 `ArgumentCountMismatch`, `ArgumentTypeMismatch` 두 개를 추가해서
+기존 5개(`UndeclaredVariable`/`RedeclaredIdentifier`/`MissingMain`/`InvalidMainCall`/`ReservedIdentifier`)와
+같은 반열에 놓음. 처음엔 `ArgumentMismatch` 하나로 시작했다가, 타입 체크까지 들어가면서 "개수 문제"와
+"타입 문제"가 섞여 보이지 않도록 이름을 분리했다.
+
+### 구현상 걸리는 문제 — 함수는 정의 순서와 무관하게 서로 호출 가능
+
+`visitProgram`이 `ctx.funcDef()`를 순서대로 `visit`하면서 각 함수 body를 그 자리에서 방문하는데,
+이 언어는 함수를 앞뒤 순서 상관없이 서로 호출할 수 있어야 한다(순방향 참조, 재귀, 상호 재귀).
+그래서 본문을 방문하기 시작하는 시점에 이미 프로그램의 모든 함수 시그니처를 알고 있어야 한다.
+
+**해결**: `visitProgram`을 2단계로 나눔.
+
+```ts
+visitProgram = (ctx: ProgramContext): Program => {
+  this.symbolTable.enterScope();
+
+  // 1단계 — prepass: 본문을 방문하기 전에 모든 함수의 시그니처(파라미터 이름→타입, 반환 타입)부터
+  // 먼저 모아둔다. 이래야 순방향 참조/재귀/상호 재귀도 visitFuncCall에서 검증 가능.
+  ctx.funcDef().forEach((fd) => {
+    const params = new Map<string, TypeName>();
+    fd.paramList()?.IDENT().forEach((ident) => params.set(ident.getText(), TypeName.Int));
+    this.functionSignatures.set(fd.IDENT().getText(), { params, returnType: this.getReturnType(fd) });
+  });
+
+  // 2단계 — 이제 본문을 방문. 어떤 함수를 호출하든 functionSignatures엔 이미 전부 들어있다.
+  const functions = ctx.funcDef().map((fd) => this.visit(fd) as FuncDef);
+  ...
+};
+```
+
+상호 재귀(`isEven`이 `isOdd`를 부르고 `isOdd`가 `isEven`을 부르는 경우)로 직접 검증함: 정의 순서를
+바꿔도, 그리고 어느 한쪽 호출의 인자 개수를 일부러 틀려도 정확히 그 호출 지점에서 잡힘.
+
+### 자료구조 — `functionSignatures: Map<string, FunctionSignature>`
+
+```ts
+type FunctionSignature = {
+  params: Map<string, TypeName>; // 삽입 순서 보장 — 위치별 대조에 씀
+  returnType: TypeName; // int | void
+};
+```
+
+처음엔 `Map<string, number>`(파라미터 개수만)로 시작했다가, 타입 체크를 붙이면서 확장했다.
+
+**쉐도잉은 고려** — 검토했지만 해당 없음. 이 언어는 Q1에서 확인했듯 `funcDef`가
+`stmt`의 alternative가 아니라서 함수 안에 함수를 정의하는 게 애초에 문법적으로 불가능하다. 즉 함수는
+항상 하나의 평평한(top-level) 네임스페이스에만 존재하고, 변수처럼 스코프가 쌓이는 개념 자체가 없다.
+또한 함수 이름과 변수 이름은 서로 다른 네임스페이스라(`visitFuncCall`이 `symbolTable`을 전혀 안 봄),
+"지역변수가 같은 이름의 함수를 가리는" 경우도 없다.

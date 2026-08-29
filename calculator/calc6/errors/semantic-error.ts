@@ -7,6 +7,8 @@ export const SemanticErrorKind = {
   MissingMain: "missing-main",
   InvalidMainCall: "invalid-main-call",
   ReservedIdentifier: "reserved-identifier",
+  ArgumentCountMismatch: "argument-count-mismatch",
+  ArgumentTypeMismatch: "argument-type-mismatch",
 } as const;
 
 export type SemanticErrorKind = (typeof SemanticErrorKind)[keyof typeof SemanticErrorKind];
