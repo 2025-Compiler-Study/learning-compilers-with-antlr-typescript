@@ -189,21 +189,6 @@ describe("Executor", () => {
       expect(writer).toHaveBeenCalledWith(5);
     });
 
-    it("재귀 호출이 정상 동작한다", () => {
-      const writer = run(`
-      func fact(int n) {
-        if (n <= 1) {
-          return 1;
-        }
-        return n * fact(n - 1);
-      }
-      func main() {
-        write(fact(5));
-      }
-    `);
-      expect(writer).toHaveBeenCalledWith(120);
-    });
-
     it("오류: 등록되지 않은 함수를 호출하면 에러", () => {
       expect(() =>
         run(`
@@ -287,6 +272,134 @@ describe("Executor", () => {
     `);
       expect(errors).toHaveLength(1);
       expect(errors[0]!.kind).toBe(SemanticErrorKind.ArgumentCountMismatch);
+    });
+  });
+
+  describe("여러 호출 depth에서의 built-in 함수", () => {
+    it("깊이 중첩된 함수 호출 각 단계에서 write가 정상 동작한다", () => {
+      const writer = run(`
+      func level3() {
+        write(3);
+        return 3;
+      }
+      func level2() {
+        write(2);
+        return level3() + 2;
+      }
+      func level1() {
+        write(1);
+        return level2() + 1;
+      }
+      func main() {
+        write(level1());
+      }
+    `);
+      expect(writer.mock.calls.map((c) => c[0])).toEqual([1, 2, 3, 6]);
+    });
+
+    it("깊이 중첩된 함수 호출 안에서 read로 입력값을 전달받는다", () => {
+      const writer = run(
+        `
+      func inner() {
+        return read() + 1;
+      }
+      func outer() {
+        return inner() + 1;
+      }
+      func main() {
+        write(outer());
+      }
+    `,
+        [10],
+      );
+      expect(writer).toHaveBeenCalledWith(12);
+    });
+  });
+
+  describe("재귀 호출", () => {
+    it("간접 재귀 — isEven과 isOdd가 서로를 호출한다", () => {
+      const writer = run(`
+      func isEven(int n) {
+        if (n == 0) {
+          return 1;
+        }
+        return isOdd(n - 1);
+      }
+      func isOdd(int n) {
+        if (n == 0) {
+          return 0;
+        }
+        return isEven(n - 1);
+      }
+      func main() {
+        write(isEven(10));
+        write(isOdd(10));
+      }
+    `);
+      expect(writer.mock.calls.map((c) => c[0])).toEqual([1, 0]);
+    });
+  });
+
+  describe("return 문에서의 함수 호출", () => {
+    it("return 표현식 안에서 재귀 호출이 일어난다 (factorial)", () => {
+      const writer = run(`
+      func factorial(int n) {
+        if (n <= 1) {
+          return 1;
+        }
+        return n * factorial(n - 1);
+      }
+      func main() {
+        write(factorial(5));
+      }
+    `);
+      expect(writer).toHaveBeenCalledWith(120);
+    });
+
+    it("return이 다른 함수 호출 결과를 그대로 반환한다", () => {
+      const writer = run(`
+      func inner() {
+        return 42;
+      }
+      func wrapper() {
+        return inner();
+      }
+      func main() {
+        write(wrapper());
+      }
+    `);
+      expect(writer).toHaveBeenCalledWith(42);
+    });
+
+    it("return이 재귀 호출 결과를 그대로 반환한다 (countdown)", () => {
+      const writer = run(`
+      func countdown(int n) {
+        if (n <= 0) {
+          return 0;
+        }
+        write(n);
+        return countdown(n - 1);
+      }
+      func main() {
+        countdown(3);
+      }
+    `);
+      expect(writer.mock.calls.map((c) => c[0])).toEqual([3, 2, 1]);
+    });
+
+    it("return 표현식 안에서 재귀 호출이 두 번 일어난다 (fibonacci)", () => {
+      const writer = run(`
+      func fib(int n) {
+        if (n <= 1) {
+          return n;
+        }
+        return fib(n - 1) + fib(n - 2);
+      }
+      func main() {
+        write(fib(10));
+      }
+    `);
+      expect(writer).toHaveBeenCalledWith(55);
     });
   });
 
