@@ -193,3 +193,102 @@ a     b
 - 괄호와 우선순위가 AST 모양을 정한다.
 - AST에서 깊은 쪽이 중간 코드에서 먼저(위에) 나온다.
 - 중간 코드는 값 사이의 의존 관계를 지키는 순서로 펼쳐 쓴 것이다.
+
+---
+
+## Cond
+
+대상 코드: `cond.ll` (두 수 중 큰 값 출력)
+
+```llvm
+define i32 @main() {
+  %x      = call i32 @read()
+  %y      = call i32 @read()
+  %result = alloca i32
+  %cond = icmp sgt i32 %x, %y
+
+  br i1 %cond, label %even, label %odd
+
+even:
+  store i32 %x, ptr %result
+  br label %end
+
+odd:
+  store i32 %y, ptr %result
+  br label %end
+
+end:
+  %out = load i32, ptr %result
+  call void @write(i32 %out)
+  ret i32 0
+}
+```
+
+---
+
+### Q. alloca로 메모리를 할당하는 것과 phi를 쓰는 것은 무엇이 다른가?
+
+#### 1. alloca 방식 (위 코드)
+
+값을 **스택 메모리에 두고** 분기마다 `store`, 합류 지점에서 `load`한다. 소스 언어의 "변수"를 그대로 옮긴 방식이다.
+
+```llvm
+  %result = alloca i32            ; 스택에 i32 한 칸
+  br i1 %cond, label %even, label %odd
+even:
+  store i32 %x, ptr %result       ; 메모리에 씀
+  br label %end
+odd:
+  store i32 %y, ptr %result
+  br label %end
+end:
+  %out = load i32, ptr %result    ; 메모리에서 읽음
+```
+
+#### 2. phi 방식
+
+```llvm
+  br i1 %cond, label %even, label %odd
+even:
+  br label %end
+odd:
+  br label %end
+end:
+  %out = phi i32 [ %x, %even ], [ %y, %odd ]
+  call void @write(i32 %out)
+```
+
+`phi`는 **어느 블록에서 왔느냐**에 따라 값을 고르는 명령이다. `%even`에서 왔으면 `%x`, `%odd`에서 왔으면 `%y`가 된다. 메모리는 쓰지 않고 SSA 값(레지스터)만 쓴다.
+
+이 예제는 `select i1 %cond, i32 %x, i32 %y` 한 줄로도 된다. phi는 블록 안에서 여러 계산이 일어날 때 쓸모가 커진다.
+
+#### 왜 둘 다 있나: SSA 제약
+
+LLVM IR은 **SSA**(Static Single Assignment)라서 이름 하나에 값을 **딱 한 번만** 대입할 수 있다. "분기마다 다른 값을 같은 변수에 넣는" 상황을 표현하는 방법이 두 가지다.
+
+- **alloca:** 변수를 메모리 주소로 만들어 SSA 제약을 피한다. 주소(`%result`)는 한 번만 정의되고, 그 안의 내용은 `store`로 여러 번 바꿀 수 있다.
+- **phi:** SSA 안에서 정면으로 해결한다. 제어 흐름이 합쳐지는 지점에서 값을 고른다.
+
+#### 비교
+
+|                  | alloca + load/store                 | phi                                              |
+| ---------------- | ----------------------------------- | ------------------------------------------------ |
+| 값의 위치        | 스택 메모리                         | SSA 레지스터                                     |
+| 코드 생성 난이도 | 쉽다. 변수마다 alloca, 대입은 store | 어렵다. 합류 지점과 선행 블록을 직접 추적해야 함 |
+| 루프·재대입      | 그냥 store 하면 됨                  | 루프 헤더마다 phi가 필요함                       |
+| 성능(최적화 전)  | 메모리 접근이 생겨 느림             | 빠름                                             |
+| 최적화 친화성    | 낮음 (메모리를 추적해야 함)         | 높음 (정의와 사용이 명확함)                      |
+
+#### phi 사용 규칙
+
+1. phi는 블록 **맨 앞**에 몰아서 써야 한다. 다른 명령보다 먼저 와야 한다.
+2. 그 블록의 **모든 선행 블록**마다 `[값, %블록]` 항목이 있어야 한다.
+3. 라벨은 값이 계산된 블록이 아니라 **실제로 점프해 온 직전 블록**이다. `even:` 안에서 또 분기해 `%even.inner`에서 `%end`로 왔다면 `%even.inner`라고 써야 한다.
+
+#### 실무에서는
+
+clang도 처음에는 **모든 지역변수를 alloca로 만든다.** 그다음 `mem2reg`(SROA) 패스가 alloca/load/store를 자동으로 phi로 바꾼다.
+
+> 프론트엔드는 alloca로 단순하게 생성하고, 최적화 패스가 phi로 변환한다.
+
+ANTLR로 만드는 언어의 코드 생성도 alloca로 가는 것이 정석이다.
